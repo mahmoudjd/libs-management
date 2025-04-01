@@ -7,15 +7,9 @@ import { apiRoutes } from "../api/api-routes"
 
 
 export function initExpress(app: express.Application, ctx: AppContext) {
-
   app.use(express.json())
   app.use(cors())
   app.use(cookieParser())
-
-  app.use(ctx.config.api.prefix, (req, res, next) => {
-    console.log(" API prefix ", ctx.config.api.prefix)
-    console.log(" API path ", req.path)
-  })
 
   app.use(ctx.config.api.prefix, apiRoutes(ctx))
 

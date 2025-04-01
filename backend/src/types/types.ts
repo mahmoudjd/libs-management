@@ -9,7 +9,7 @@ export const ObjectIdSchema = z.object({
   _id: z.any(),
 })
 
-const BookSchema = z.object({
+export const BookSchema = z.object({
   title: z.string(),
   author: z.string(),
   gener: z.string(),
@@ -18,15 +18,16 @@ const BookSchema = z.object({
 
 const BookDbSchema = ObjectIdSchema.merge(BookSchema)
 
-const UserSchema = z.object({
+export const UserSchema = z.object({
   name: z.string(),
   email: z.string(),
   password: z.string(),
+  role: z.enum(["admin", "user"]),
 })
 
 const UserDbSchema = ObjectIdSchema.merge(UserSchema)
 
-const LoanSchema = z.object({
+export const LoanSchema = z.object({
   bookId: z.instanceof((ObjectId)),
   userId: z.instanceof(ObjectId),
   loanDate: z.date(),

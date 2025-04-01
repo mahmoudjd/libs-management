@@ -13,7 +13,6 @@ async function startServer() {
 
   const ctx = await createAppContext(config)
   const app = express()
-
   initExpress(app, ctx)
 }
 
