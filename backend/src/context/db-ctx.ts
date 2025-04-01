@@ -1,5 +1,8 @@
 import { Db, MongoClient } from "mongodb"
 
+import type { BookDb } from "../types/types"
+import type { LoanDb } from "../types/types"
+import type { UserDb } from "../types/types"
 
 export async function createDBContext(config: { connectionString: string, database: string }) {
   const client = new MongoClient(config.connectionString)
@@ -18,11 +21,10 @@ export async function createDBContext(config: { connectionString: string, databa
 
 function toDbCtx(db: Db) {
   return {
-    books: db.collection("books"),
-    users: db.collection("users"),
-    loans: db.collection("loans")
+    books: db.collection<BookDb>("books"),
+    users: db.collection<UserDb>("users"),
+    loans: db.collection<LoanDb>("loans")
   }
-
 }
 
 export type DBContext = ReturnType<typeof toDbCtx>

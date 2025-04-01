@@ -3,6 +3,8 @@ import { AppContext } from '../context/app-ctx'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 
+import { apiRoutes } from "../api/api-routes"
+
 
 export function initExpress(app: express.Application, ctx: AppContext) {
 
@@ -14,6 +16,8 @@ export function initExpress(app: express.Application, ctx: AppContext) {
     console.log(" API prefix ", ctx.config.api.prefix)
     console.log(" API path ", req.path)
   })
+
+  app.use(ctx.config.api.prefix, apiRoutes(ctx))
 
   app.listen(ctx.config.app.port, () => {
     console.log("✓ Backend API starting")
