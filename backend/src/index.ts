@@ -4,7 +4,6 @@ import { loadConfig } from "./config/config"
 import { createAppContext } from "./context/app-ctx"
 import { initExpress } from "./application/express"
 
-
 async function startServer() {
   const config = loadConfig()
 
@@ -13,6 +12,7 @@ async function startServer() {
 
   const ctx = await createAppContext(config)
   const app = express()
+
   initExpress(app, ctx)
 }
 

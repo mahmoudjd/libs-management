@@ -10,6 +10,9 @@ export interface Config {
   db: {
     connectionString: string
     database: string
+  },
+  auth: {
+    secret: string
   }
 }
 
@@ -34,6 +37,9 @@ function getConfig() {
     db: {
       connectionString: env.DB_CONNECTION_STRING as unknown as string,
       database: env.DB_DATABASE as unknown as string
+    },
+    auth: {
+      secret: env.AUTH_SECRET as unknown as string
     }
   }
 

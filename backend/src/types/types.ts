@@ -19,7 +19,8 @@ export const BookSchema = z.object({
 const BookDbSchema = ObjectIdSchema.merge(BookSchema)
 
 export const UserSchema = z.object({
-  name: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
   email: z.string(),
   password: z.string(),
   role: z.enum(["admin", "user"]),

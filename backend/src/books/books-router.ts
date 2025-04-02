@@ -17,11 +17,6 @@ export function booksRoutes(appCtx: AppContext, appRouter: Router) {
   booksRoute(appCtx, booksRouter);
 }
 
-/**
-  * Get all books
-  * @param appCtx
-  * @param router
-  */
 function booksRoute(appCtx: AppContext, router: Router) {
   router.route('/')
     .get(getBooksHandler(appCtx))
