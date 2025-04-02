@@ -18,7 +18,7 @@ export const deleteBookHandler = (appCtx: AppContext) => async (req: any, res: R
   }
 
   try {
-    const result = await appCtx.dbCtx.books.findOneAndDelete({ _id: new ObjectId(bookId) });
+    const result = await deleteBook(appCtx, bookId)
 
     if (!result) {
       return res.status(404).json({ error: "Book not found" });
@@ -30,3 +30,8 @@ export const deleteBookHandler = (appCtx: AppContext) => async (req: any, res: R
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+const deleteBook = async (appCtx: AppContext, bookId: string) => {
+  const result = await appCtx.dbCtx.books.deleteOne({ _id: new ObjectId(bookId) });
+  return result.acknowledged
+}

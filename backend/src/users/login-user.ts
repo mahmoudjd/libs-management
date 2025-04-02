@@ -27,7 +27,7 @@ export const loginUser = (appCtx: AppContext) => async (req: Request, res: Respo
   const token = jwt.sign(
     { userId: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role },
     appCtx.config.auth.secret,
-    { expiresIn: "1h" }
+    { expiresIn: "1d" }
   );
 
   return res.json({ message: "Login successful.", token });

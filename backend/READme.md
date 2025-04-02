@@ -16,32 +16,38 @@ Dieses **Node.js + TypeScript**-Backend verwaltet eine Bibliothek und ermöglich
 
 ```plaintext
 src/
-├── api/                   # API-Routen und Hilfsfunktionen  
-│   ├── api-routes.ts      # Zentrale API-Routen  
-│   └── lib/               # Hilfsfunktionen  
-│       └── extract-access-token-from-request.ts  # Extrahiert Token aus Anfragen  
-├── application/           # Express-Server  
-│   └── express.ts         # Express-Setup  
-├── books/                 # Bücherverwaltung  
-│   ├── books-router.ts    # Bücher-Routen  
-│   ├── create-book.ts     # Buch hinzufügen  
-│   ├── delete-book.ts     # Buch löschen  
-│   └── get-books.ts       # Bücher abrufen  
-├── config/                # Konfigurationsdateien  
-│   └── config.ts          # Lädt Umgebungsvariablen  
-├── context/               # App- und Datenbank-Kontext  
-│   ├── app-ctx.ts         # Zentraler App-Kontext  
-│   └── db-ctx.ts          # MongoDB-Verbindung  
-├── loans/                 # Verwaltung von Buchausleihen  
-├── middlewares/           # Middleware-Funktionen  
-│   └── authentication.ts  # Authentifizierung mit JWT  
-├── types/                 # TypeScript-Typdefinitionen  
-│   └── types.ts           # Globale Typen für das Projekt  
-├── users/                 # Benutzerverwaltung  
-│   ├── auth-router.ts     # Authentifizierungsrouten  
-│   ├── login-user.ts      # Login-Logik  
-│   └── signup-user.ts     # Registrierung-Logik  
-└── index.ts               # Einstiegspunkt der Anwendung  
+├── api/                          # API-Routen und Hilfsfunktionen  
+│   ├── api-routes.ts             # Zentrale API-Routen  
+│   └── lib/                      # Hilfsfunktionen  
+│       └── extract-access-token-from-request.ts  # Extrahiert Access-Token aus Anfragen  
+├── application/                   # Express-Server  
+│   └── express.ts                 # Express-Setup  
+├── books/                         # Bücherverwaltung  
+│   ├── books-router.ts            # Bücher-Routen  
+│   ├── create-book.ts             # Buch hinzufügen  
+│   ├── delete-book.ts             # Buch löschen  
+│   ├── get-books.ts               # Bücher abrufen  
+│   └── update-book.ts             # Buch aktualisieren  
+├── config/                        # Konfigurationsdateien  
+│   └── config.ts                  # Lädt Umgebungsvariablen  
+├── context/                       # App- und Datenbank-Kontext  
+│   ├── app-ctx.ts                 # Zentraler App-Kontext  
+│   └── db-ctx.ts                  # MongoDB-Verbindung  
+├── loans/                         # Verwaltung von Buchausleihen  
+│   ├── create-loan.ts             # Buch ausleihen  
+│   ├── delete-loan.ts             # Buchrückgabe/Löschung eines Ausleihdatensatzes  
+│   ├── loan-router.ts             # Routen für Buchausleihen  
+│   └── update-loan.ts             # Buchausleihe aktualisieren  
+├── middlewares/                   # Middleware-Funktionen  
+│   └── authentication.ts          # Authentifizierung mit JWT  
+├── types/                         # TypeScript-Typdefinitionen  
+│   └── types.ts                   # Globale Typen für das Projekt  
+├── users/                         # Benutzerverwaltung  
+│   ├── auth-router.ts             # Authentifizierungsrouten  
+│   ├── git-user.ts                # Benutzerinformationen abrufen (Tippfehler: Meintest du "get-user.ts"?)  
+│   ├── login-user.ts              # Login-Logik  
+│   └── signup-user.ts             # Registrierung-Logik  
+└── index.ts                       # Einstiegspunkt der Anwendung  
 ```
 
 ## 🔧 Voraussetzungen
@@ -88,7 +94,11 @@ src/
 ### 🔄 **Ausleihen**
 | Methode | Route          | Beschreibung |
 |---------|---------------|--------------|
-
+| `GET`   | `/loans`       | Alle Ausleihen abrufen (Admin) |
+| `GET`   | `/loans/:userId` | Alle Ausleihen des Nutzern abrufen |
+| `POST`  | `/loans`       | Neue Buchausleihe hinzufügen |
+| `DELETE`| `/loans/:id`   | Buchausleihe löschen (Admin) |
+| `PUT`   | `/loans/:id`   | Buchauslaeihe returnDAte aktualisieren |
 
 ## 🛠 Entwicklung & Sicherheit
 
