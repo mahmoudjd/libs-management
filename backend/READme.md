@@ -3,12 +3,12 @@
 Dieses **Node.js + TypeScript**-Backend verwaltet eine Bibliothek und ermöglicht es Nutzern, **Bücher zu suchen, auszuleihen, zurückzugeben und hinzuzufügen**.  
 
 ## 🚀 Features
-✅ **📖 Bücherverwaltung** – Hinzufügen, Suchen, Löschen von Büchern
-✅ **👤 Benutzerverwaltung** – Registrierung, Anmeldung und Authentifizierung
-✅ **🔒 JWT-Authentifizierung** – Sichere Benutzeranmeldung mit Token
-✅ **📌 Ausleihsystem** – Nutzer können Bücher ausleihen und zurückgeben
-✅ **🔗 REST API** – Strukturierte und dokumentierte API-Endpunkte
-✅ **💾 MongoDB** – Speicherung von Büchern, Nutzern und Ausleihen
+- ✅ **📖 Bücherverwaltung** – Hinzufügen, Suchen, Löschen von Büchern
+- ✅ **👤 Benutzerverwaltung** – Registrierung, Anmeldung und Authentifizierung
+- ✅ **🔒 JWT-Authentifizierung** – Sichere Benutzeranmeldung mit Token
+- ✅ **📌 Ausleihsystem** – Nutzer können Bücher ausleihen und zurückgeben
+- ✅ **🔗 REST API** – Strukturierte und dokumentierte API-Endpunkte
+- ✅ **💾 MongoDB** – Speicherung von Büchern, Nutzern und Ausleihen
 
 ---
 
