@@ -5,7 +5,7 @@ import type { AppContext } from "../context/app-ctx";
 import { UserSchema } from "../types/types";
 
 export const signupUser = (appCtx: AppContext) => async (req: Request, res: Response) => {
-  const { firstName, lastName, email, password, role } = req.body;
+  const { firstName, lastName, email, password } = req.body;
 
   if (!firstName || !lastName || !email || !password) {
     return res.status(400).json({ message: "First name, last name, email, and password are required." });
@@ -28,12 +28,10 @@ export const signupUser = (appCtx: AppContext) => async (req: Request, res: Resp
     return res.status(400).json(parseResult.error)
   }
   // Save the user
+  const user = parseResult.data
   await appCtx.dbCtx.users.insertOne({
-    email: parseResult.data?.email,
-    firstName: parseResult.data.firstName,
-    lastName: parseResult.data.lastName,
+    ...user,
     password: hashedPassword,
-    role: parseResult.data.role ?? "user"
   });
 
   return res.status(201).json({ message: "User successfully registered." });

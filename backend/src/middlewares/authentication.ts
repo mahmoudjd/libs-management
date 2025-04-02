@@ -6,7 +6,7 @@ import { ObjectId } from "mongodb";
 
 export const authentication =
   (ctx: AppContext) =>
-    async (req: Request, res: Response, next: NextFunction) => {
+    async (req: any, res: Response, next: NextFunction) => {
       const { originalUrl, method } = req;
 
       console.info(`🔒 Authenticating request: ${method} ${originalUrl}`);
