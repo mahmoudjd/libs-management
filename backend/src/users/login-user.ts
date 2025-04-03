@@ -30,5 +30,12 @@ export const loginUser = (appCtx: AppContext) => async (req: Request, res: Respo
     { expiresIn: "1d" }
   );
 
-  return res.json({ message: "Login successful.", token });
+  const result = {
+    email: user.email,
+    firstname: user.firstName,
+    lastName: user.lastName,
+    role: user.role,
+    accessToken: token
+  }
+  return res.json({ message: "Login successful.", user: result });
 }
