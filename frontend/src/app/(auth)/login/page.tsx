@@ -27,60 +27,58 @@ export default function LoginPage() {
         email,
         password,
         redirect: false,
-      })
-
+      });
 
       if (response?.error) {
-        console.log("--->", response.error)
-        setError("Falsche Anmeldedaten.")
+        setError("Falsche Anmeldedaten.");
       } else {
-        router.push("/")
+        router.push("/dashboard");
       }
     } catch (err) {
-      setError("Fehler beim Login.")
+      setError("Fehler beim Login.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full flex flex-col space-y-2 max-w-md shadow-xl border border-gray-200 rounded-2xl">
-        <div>
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="w-full flex flex-col space-y-2 max-w-md shadow-xl border border-gray-200 rounded-2xl p-6">
           <h2 className="text-2xl text-center text-black">Willkommen zurück</h2>
-        </div>
 
-        <div className="w-full flex flex-col space-y-4 p-2">
-          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
-          <form onSubmit={handleLogin} className="flex flex-col space-y-4 w-full gap-4">
+          <form onSubmit={handleLogin} className="flex flex-col space-y-4">
             <div className="relative">
               <EnvelopeIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
               <input
-                type="email"
-                placeholder="E-Mail"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 w-full h-12 text-black"
+                  type="email"
+                  placeholder="E-Mail"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10 w-full h-12 text-black border border-gray-300 rounded-lg p-2"
               />
             </div>
 
             <div className="relative">
               <LockClosedIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
               <input
-                type="password"
-                placeholder="Passwort"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-12 text-black pl-10"
+                  type="password"
+                  placeholder="Passwort"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full h-12 text-black pl-10 border border-gray-300 rounded-lg p-2"
               />
             </div>
 
-            <button type="submit" className="bg-blue-600 text-white flex h-12 items-center justify-center rounded gap-2 hover:cursor-pointer hover:bg-blue-500">
+            <button
+                type="submit"
+                className="bg-blue-600 text-white flex h-12 items-center justify-center rounded gap-2 hover:cursor-pointer hover:bg-blue-500"
+            >
               {loading ? (
-                <ArrowRightOnRectangleIcon className="h-5 w-5 animate-spin" />
+                  <ArrowRightOnRectangleIcon className="h-5 w-5 animate-spin" />
               ) : (
-                <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                  <ArrowRightOnRectangleIcon className="h-5 w-5" />
               )}
               Login
             </button>
@@ -89,8 +87,8 @@ export default function LoginPage() {
           <div className="my-4 text-center text-gray-500">Oder mit</div>
 
           <button
-            onClick={() => signIn("google")}
-            className="w-full bg-red-500 text-white flex justify-center items-center h-12 rounded hover:cursor-pointer hover:bg-red-600"
+              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+              className="w-full bg-red-500 text-white flex justify-center items-center h-12 rounded hover:cursor-pointer hover:bg-red-600"
           >
             Google Login
           </button>
@@ -103,6 +101,5 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
-    </div>
-  )
+  );
 }

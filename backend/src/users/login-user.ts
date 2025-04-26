@@ -31,11 +31,12 @@ export const loginUser = (appCtx: AppContext) => async (req: Request, res: Respo
   );
 
   const result = {
+    id: user._id.toString(),
     email: user.email,
-    firstname: user.firstName,
+    firstName: user.firstName,
     lastName: user.lastName,
     role: user.role,
     accessToken: token
   }
-  return res.json({ message: "Login successful.", user: result });
+  return res.status(200).json({ message: "Login successful.", user: result });
 }
