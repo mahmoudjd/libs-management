@@ -96,11 +96,12 @@ Ein modernes System zur Verwaltung einer Bibliothek. Nutzer können Bücher ausl
 ### Authentifizierung
 - `POST /auth/login` - Benutzeranmeldung
 - `POST /auth/signup` - Benutzerregistrierung
-
+- `POST /auth/google-login` - Benutzeranmeldung mit Google mail
 ### Bücher
 - `GET /books` - Alle Bücher abrufen
 - `POST /books` - Neues Buch hinzufügen (nur Admin)
 - `PUT /books/:bookId` - Buch aktualisieren (nur Admin)
+- `PUT /books/:bookId/change-availability` - Verfügbarkeit des Buchs bearbeiten
 - `DELETE /books/:bookId` - Buch löschen (nur Admin)
 
 ### Ausleihen
