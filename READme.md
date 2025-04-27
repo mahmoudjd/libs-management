@@ -55,7 +55,7 @@ Ein modernes System zur Verwaltung einer Bibliothek. Nutzer können Bücher ausl
 3. Umgebungsvariablen konfigurieren:
    Erstellen Sie eine `.env`-Datei im Backend-Verzeichnis mit folgenden Variablen:
    ```
-   PORT=3001
+   PORT=8080
    MONGODB_URI=mongodb://localhost:27017/library
    JWT_SECRET=your_jwt_secret
    ```
