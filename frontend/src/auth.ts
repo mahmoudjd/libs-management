@@ -62,8 +62,8 @@ const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ account, profile }) {
-      if (account?.provider === "google" && !profile?.email) {
-        throw new Error("No profile")
+      if (account?.provider === "google" ) {
+        return !!profile?.email // && profile.email.endsWith("@gmail.com")
       }
       // The endpoint doesn't exist, so we'll just return true to allow sign-in
       // In a production app, you would implement proper user lookup/creation
