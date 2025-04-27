@@ -12,7 +12,7 @@ export const ObjectIdSchema = z.object({
 export const BookSchema = z.object({
   title: z.string(),
   author: z.string(),
-  gener: z.string(),
+  genre: z.string(),
   available: z.boolean().default(true),
 })
 

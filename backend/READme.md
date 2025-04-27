@@ -44,8 +44,10 @@ src/
 │   └── types.ts                   # Globale Typen für das Projekt  
 ├── users/                         # Benutzerverwaltung  
 │   ├── auth-router.ts             # Authentifizierungsrouten  
-│   ├── git-user.ts                # Benutzerinformationen abrufen (Tippfehler: Meintest du "get-user.ts"?)  
+│   ├── get-users.ts               # Alle Benutzer abrufen
+|   ├── get-user.ts                # Benutzerinformationen abrufen 
 │   ├── login-user.ts              # Login-Logik  
+│   ├── google-auth.ts             # Login mit Google Logik  
 │   └── signup-user.ts             # Registrierung-Logik  
 └── index.ts                       # Einstiegspunkt der Anwendung  
 ```

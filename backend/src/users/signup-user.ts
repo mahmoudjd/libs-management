@@ -20,7 +20,11 @@ export const signupUser = (appCtx: AppContext) => async (req: Request, res: Resp
   // Hash the password
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const parseResult = UserSchema.safeParse(req.body)
+  const newUser = {
+    ...req.body,
+    role: "user"
+  }
+  const parseResult = UserSchema.safeParse(newUser)
   if (parseResult.error) {
     console.debug(
       `Invalid request body for method ${req.method} ${req.originalUrl} with error ${parseResult.error}`

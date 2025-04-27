@@ -3,7 +3,9 @@
 import { useState } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { ArrowRightOnRectangleIcon, EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/solid"
+import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/solid"
+import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/ui/password-input"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -49,31 +51,22 @@ export default function LoginPage() {
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
           <form onSubmit={handleLogin} className="flex flex-col space-y-4">
-            <div className="relative">
-              <EnvelopeIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-              <input
-                  type="email"
-                  placeholder="E-Mail"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 w-full h-12 text-black border border-gray-300 rounded-lg p-2"
-              />
-            </div>
-
-            <div className="relative">
-              <LockClosedIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-              <input
-                  type="password"
-                  placeholder="Passwort"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-12 text-black pl-10 border border-gray-300 rounded-lg p-2"
-              />
-            </div>
+            <Input
+                type="email"
+                placeholder="E-Mail"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+            />
+            <PasswordInput
+                placeholder="Passwort"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+            />
 
             <button
                 type="submit"
-                className="bg-blue-600 text-white flex h-12 items-center justify-center rounded gap-2 hover:cursor-pointer hover:bg-blue-500"
+                disabled={loading}
+                className="bg-blue-600 text-white flex h-12 items-center justify-center rounded gap-2 hover:bg-blue-500 transition disabled:opacity-50"
             >
               {loading ? (
                   <ArrowRightOnRectangleIcon className="h-5 w-5 animate-spin" />
@@ -88,7 +81,7 @@ export default function LoginPage() {
 
           <button
               onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-              className="w-full bg-red-500 text-white flex justify-center items-center h-12 rounded hover:cursor-pointer hover:bg-red-600"
+              className="w-full bg-red-500 text-white flex justify-center items-center h-12 rounded hover:bg-red-600 transition"
           >
             Google Login
           </button>
