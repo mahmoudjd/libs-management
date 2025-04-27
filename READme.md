@@ -25,6 +25,8 @@ Ein modernes System zur Verwaltung einer Bibliothek. Nutzer können Bücher ausl
 - NextAuth.js für Authentifizierung
 - Tailwind CSS für Styling
 - Axios für API-Anfragen
+- Radix UI für Komponente
+- TanStack/react-query für RESTful-APIs
 
 ### Backend
 - Node.js
