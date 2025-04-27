@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authentication } from "../middlewares/authentication";
 import { createLoanHandler } from "./create-loan";
-import { updateLoandHandler } from "./update-loan";
+import { updateLoanHandler } from "./update-loan";
 import { deleteLoandHandler } from "./delete-loan";
 import { getLoansHandler } from "./get-loans";
 import { getLoansByUserIdHandler } from "./get-user-loans"
@@ -19,7 +19,7 @@ export function loanRoutes(appCtx: AppContext, appRouter: Router) {
     .get(authentication(appCtx), getLoansByUserIdHandler(appCtx))
 
   loanRouter.route("/:loanId")
-    .put(authentication(appCtx), updateLoandHandler(appCtx))
+    .put(authentication(appCtx), updateLoanHandler(appCtx))
     .delete(authentication(appCtx), deleteLoandHandler(appCtx));
 
 

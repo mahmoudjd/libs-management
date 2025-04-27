@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { AppContext } from "../context/app-ctx";
 import { ObjectId } from "mongodb";
 
-export const updateLoandHandler = (appCtx: AppContext) => async (req: Request, res: Response) => {
+export const updateLoanHandler = (appCtx: AppContext) => async (req: Request, res: Response) => {
   const { loanId } = req.params;
   const { returnDate } = req.body;
 

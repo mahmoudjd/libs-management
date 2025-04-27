@@ -22,7 +22,7 @@ export const getBooksHandler = (appCtx: AppContext) => async (req: Request, res:
   * @param appCtx
   * @returns {Promise<BookDb[]>}
   */
-const getBooksFromDb = async (appCtx: AppContext): Promise<BookDb[]> => {
+export const getBooksFromDb = async (appCtx: AppContext): Promise<BookDb[]> => {
   const cursor = appCtx.dbCtx.books.find({})
   const books = await cursor.toArray()
   return books

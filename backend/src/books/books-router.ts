@@ -7,6 +7,7 @@ import { createBookHandler } from './create-book';
 import { deleteBookHandler } from './delete-book';
 import { authentication } from '../middlewares/authentication';
 import { updateBookHandler } from './update-book';
+import {changeBookAvailability} from "./change-book-availability";
 
 
 const booksRouter = Router({ mergeParams: true });
@@ -29,6 +30,8 @@ function booksRoute(appCtx: AppContext, router: Router) {
   router.route('/:bookId')
     .delete(authentication(appCtx), deleteBookHandler(appCtx))
     .put(authentication(appCtx), updateBookHandler(appCtx))
+  router.route('/:bookId/change-availability')
+      .put(authentication(appCtx), changeBookAvailability(appCtx))
 }
 
 
