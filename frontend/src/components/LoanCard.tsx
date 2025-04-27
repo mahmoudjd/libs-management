@@ -1,16 +1,20 @@
 import React from 'react';
-import {Loan} from '@/lib/types';
-import {Card, CardContent} from "@/components/ui/card";
-import {Badge} from "@/components/ui/badge";
-import {Button} from "@/components/ui/button";
-import {Text} from "@/components/ui/text";
+import { Loan } from '@/lib/types';
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
 
 type LoanCardProps = {
     loan: Loan;
     onReturn: (loanId: string, bookId: string) => void;
 };
 
-const LoanCard: React.FC<LoanCardProps> = ({loan, onReturn}) => {
+const LoanCard: React.FC<LoanCardProps> = ({ loan, onReturn }) => {
+    const now = new Date();
+    const isOverdue = new Date(loan.returnDate) <= now;
+    const daysUntilReturn = Math.floor((new Date(loan.returnDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const isSoonDue = daysUntilReturn <= 3 && daysUntilReturn > 0;
 
     return (
         <Card className="hover:shadow-md transition-shadow">
@@ -39,11 +43,14 @@ const LoanCard: React.FC<LoanCardProps> = ({loan, onReturn}) => {
 
                 {/* Actions */}
                 <div className="flex justify-between items-center mt-auto">
-                    <Badge variant="default">Loaned</Badge>
+                    <Badge variant={isOverdue ? "destructive" : isSoonDue ? "warning" : "default"}>
+                        {isOverdue ? "Overdue" : isSoonDue ? "Due soon" : "Loaned"}
+                    </Badge>
 
                     <Button
-                        className="bg-green-600 hover:bg-green-700 transition text-white text-xs font-semibold px-4 py-2 rounded-full"
+                        className="bg-green-600 hover:bg-green-700 transition text-white text-xs font-semibold px-4 py-2 rounded-full disabled:opacity-50"
                         onClick={() => onReturn(loan._id, loan.bookId)}
+                        disabled={isOverdue}
                     >
                         Return Book
                     </Button>
