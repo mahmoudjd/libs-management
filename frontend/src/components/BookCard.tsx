@@ -32,14 +32,11 @@ const BookCard: React.FC<BookCardProps> = ({
                     <p className="text-gray-600 text-sm mb-4">Genre: {book.genre}</p>
                 </div>
 
-                {/* Status + Actions */}
-                <div className="flex justify-between items-center mt-auto">
-                    {/* Status */}
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 justify-between items-center mt-auto">
                     <Badge variant={book.available ? "success" : "destructive"}>
                         {book.available ? 'Available' : 'Borrowed'}
                     </Badge>
 
-                    {/* Action Buttons */}
                     <div className="flex space-x-2">
                         {isAdmin && (
                             <>
