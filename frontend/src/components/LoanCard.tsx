@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import { toDEDateString } from "@/lib/helper/to-de-date-string";
 
 type LoanCardProps = {
     loan: Loan;
@@ -26,18 +27,10 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onReturn }) => {
                         <Text variant="muted">Loaned by {loan.user.name}</Text>
                     )}
                     <Text variant="muted">
-                        Borrowed: {new Date(loan.loanDate).toLocaleDateString("de-DE", {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                    })}
+                        Borrowed: {toDEDateString(loan.loanDate)}
                     </Text>
                     <Text variant="muted" className="mb-4">
-                        Return Date: {new Date(loan.returnDate).toLocaleDateString("de-DE", {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                    })}
+                        Return Date: {toDEDateString(loan.returnDate)}
                     </Text>
                 </div>
 
