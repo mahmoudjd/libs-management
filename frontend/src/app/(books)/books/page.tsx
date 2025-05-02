@@ -11,6 +11,7 @@ import {Book} from "@/lib/types";
 import {useLoans} from "@/lib/hooks/useLoans";
 import EditBookDialog from "@/components/edit-book-dialog";
 import BorrowBookDialog from "@/components/borrow-book-dialog";
+import { Input } from "@/components/ui/input";
 
 export default function BooksPage() {
     const {data: session} = useSession();
@@ -29,6 +30,7 @@ export default function BooksPage() {
     const [borrowBookDialogOpen, setBorrowBookDialogOpen] = useState(false);
     const [deleteBookDialogOpen, setDeleteBookDialogOpen] = useState(false);
     const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+    const [searchQuery, setSearchQuery] = useState<string>("");
 
     const handleBorrow = async (bookId: string) => {
         setSelectedBook(books.find((book) => book._id === bookId) as Book);
@@ -40,7 +42,6 @@ export default function BooksPage() {
         setEditBookDialogOpen(true);
     };
 
-
     const handleDeleteClick = (book: Book) => {
         setSelectedBook(book);
         setDeleteBookDialogOpen(true);
@@ -49,23 +50,39 @@ export default function BooksPage() {
     const handleDelete = async (bookId: string) => {
         await deleteBook(bookId);
         setDeleteBookDialogOpen(false);
-
     };
+
+    const handleFilterBooks = (search: string) => {
+        setSearchQuery(search.toLowerCase());
+    };
+
+    const filteredBooks = books.filter((book) =>
+        book.title.toLowerCase().includes(searchQuery) ||
+        book.author?.toLowerCase().includes(searchQuery) ||
+        book.genre?.toLowerCase().includes(searchQuery)
+    );
 
     return (
         <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
                 <h1 className="text-2xl font-bold">Books</h1>
+                <Input
+                    type="text"
+                    placeholder="Search by title or author"
+                    onChange={(e) => handleFilterBooks(e.target.value)}
+                    className="w-full max-w-xs"
+                />
                 {isAdmin && (
-                    <Button onClick={() => setAddBookOpen(true)}>Add New Book</Button>
+                    <Button className="w-full max-w-40" onClick={() => setAddBookOpen(true)}>
+                        Add New Book
+                    </Button>
                 )}
             </div>
-
             {isLoading ? (
                 <p>Loading books...</p>
             ) : (
                 <BookList
-                    books={books}
+                    books={filteredBooks}
                     isAdmin={isAdmin}
                     onBorrow={handleBorrow}
                     onEdit={handleEdit}
@@ -75,7 +92,6 @@ export default function BooksPage() {
             )}
 
             {/* Dialoge */}
-
             <AddBookForm
                 open={addBookOpen}
                 onOpenChange={setAddBookOpen}
@@ -84,12 +100,11 @@ export default function BooksPage() {
                     setAddBookOpen(false);
                 }}
             />
-
             <EditBookDialog
                 open={editBookDialogOpen}
                 onOpenChange={setEditBookDialogOpen}
                 onSubmit={async (data) => {
-                    await editBook({id: selectedBook?._id!, data});
+                    await editBook({ id: selectedBook?._id!, data });
                     setEditBookDialogOpen(false);
                 }}
                 book={selectedBook}
@@ -101,8 +116,8 @@ export default function BooksPage() {
                 onSubmit={async (bookId, returnDate) => {
                     await borrowBook(bookId, returnDate);
                     setBorrowBookDialogOpen(false);
-                }}/>
-
+                }}
+            />
             <DeleteBookDialog
                 book={selectedBook}
                 open={deleteBookDialogOpen}
