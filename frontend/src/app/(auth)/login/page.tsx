@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation"
 import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/solid"
 import { Input } from "@/components/ui/input"
 import { PasswordInput } from "@/components/ui/password-input"
+import {Card} from "@/components/ui/card";
+import {Button} from "@/components/ui/button";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -44,8 +46,8 @@ export default function LoginPage() {
   };
 
   return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="w-full flex flex-col space-y-2 max-w-md shadow-xl border border-gray-200 rounded-2xl p-6">
+      <div className="flex min-h-screen items-center justify-center">
+        <Card className="p-6 w-full max-w-md space-y-4">
           <h2 className="text-2xl text-center text-black">Willkommen zurück</h2>
 
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
@@ -63,7 +65,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
             />
 
-            <button
+            <Button
                 type="submit"
                 disabled={loading}
                 className="bg-blue-600 text-white flex h-12 items-center justify-center rounded gap-2 hover:bg-blue-500 transition disabled:opacity-50"
@@ -74,17 +76,17 @@ export default function LoginPage() {
                   <ArrowRightOnRectangleIcon className="h-5 w-5" />
               )}
               Login
-            </button>
+            </Button>
           </form>
 
           <div className="my-4 text-center text-gray-500">Oder mit</div>
 
-          <button
+          <Button
               onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
               className="w-full bg-red-500 text-white flex justify-center items-center h-12 rounded hover:bg-red-600 transition"
           >
             Google Login
-          </button>
+          </Button>
 
           <p className="text-center text-sm text-gray-600 mt-4">
             Noch kein Konto?{" "}
@@ -92,7 +94,7 @@ export default function LoginPage() {
               Registrieren
             </a>
           </p>
-        </div>
+        </Card>
       </div>
   );
 }

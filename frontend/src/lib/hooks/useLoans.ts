@@ -6,7 +6,6 @@ import {apiClient} from "@/lib/apiClient";
 export const useLoans = (books: Book[]) => {
     const {data: session} = useSession();
     const queryClient = useQueryClient();
-    // @ts-ignore
     const userId = session?.user?.id
     const isAdmin = session?.user?.salesRole === "admin";
     const {data: allLoans = []} = useQuery<Loan[]>({
@@ -17,7 +16,7 @@ export const useLoans = (books: Book[]) => {
             return response.data;
         },
     })
-    // @ts-ignore
+
     const {data: userLoans = [], isLoading, error} = useQuery<Loan[]>({
         queryKey: ["loans", userId],
         queryFn: async () => {
