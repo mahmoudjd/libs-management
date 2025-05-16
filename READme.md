@@ -36,11 +36,6 @@ Ein modernes System zur Verwaltung einer Bibliothek. Nutzer können Bücher ausl
 
 ## Installation und Start
 
-### Voraussetzungen
-- Node.js (v14 oder höher)
-- MongoDB
-- npm oder yarn
-
 ### Backend einrichten
 1. Ins Backend-Verzeichnis wechseln:
    ```
