@@ -6,6 +6,8 @@ import {useRouter} from "next/navigation";
 import {useBooks} from "@/lib/hooks/useBooks";
 import {useLoans} from "@/lib/hooks/useLoans";
 import {apiClient} from "@/lib/apiClient";
+import {PageLayout} from "@/components/page-layout";
+import {GridList} from "@/components/ui/grid-list";
 
 export default function Dashboard() {
     const {data: session} = useSession();
@@ -37,10 +39,9 @@ export default function Dashboard() {
 
     if (session?.user?.salesRole === "admin") {
         return (
-            <div className="p-8 space-y-8">
-                <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+            <PageLayout title="Admin Dashboard">
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <GridList>
                     {/* Total Books Box */}
                     <div
                         className="p-6 bg-white rounded-xl shadow-md flex flex-col items-center justify-center cursor-pointer"
@@ -66,17 +67,16 @@ export default function Dashboard() {
                         <h2 className="text-lg font-semibold mb-2">All Loans</h2>
                         <p className="text-3xl">{allLoans.length}</p>
                     </div>
-                </div>
-            </div>
+                </GridList>
+            </PageLayout>
         );
     }
 
     // User Dashboard
     return (
-        <div className="p-8 space-y-8">
-            <h1 className="text-3xl font-bold">User Dashboard</h1>
+        <PageLayout title="User Dashboard">
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <GridList>
                 {/* Total Books Box */}
                 <div
                     className="p-6 bg-white rounded-xl shadow-md flex flex-col items-center justify-center cursor-pointer"
@@ -101,7 +101,7 @@ export default function Dashboard() {
                     <p className="text-sm">Name: {session?.user?.name}</p>
                     <p className="text-sm">Email: {session?.user?.email}</p>
                 </div>
-            </div>
-        </div>
+            </GridList>
+        </PageLayout>
     );
 }
