@@ -6,6 +6,7 @@ import {useBooks} from "@/lib/hooks/useBooks";
 import {useLoans} from "@/lib/hooks/useLoans";
 import LoanList from "@/components/LoanList";
 import {Button} from "@/components/ui/button";
+import {PageLayout} from "@/components/page-layout";
 
 export default function LoansPage() {
     const {data: session} = useSession();
@@ -24,21 +25,17 @@ export default function LoansPage() {
         await returnBook(loanId, bookId);
     };
     return (
-        <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">My Loans</h1>
-            </div>
-
+        <PageLayout title="Loans">
             {(booksLoading || loansLoading) ? (
                 <p>Loading loans...</p>
             ) : (
                 <LoanList
-                    loans={isAdmin? allLoans: userLoans}
+                    loans={isAdmin ? allLoans : userLoans}
                     onReturn={handleReturn}
                     isLoggedIn={!!session?.user}
                 />
             )}
 
-        </div>
+        </PageLayout>
     );
 }
