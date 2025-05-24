@@ -109,6 +109,56 @@ src/
 - MongoDB mit Mongoose – NoSQL-Datenbank für schnelle Abfragen
 - Passwort-Hashing mit bcrypt – Sichere Speicherung von Passwörtern
 
+## 🚀 Deployment mit fly.io
+
+### Umgebungsvariablen in fly.io
+
+Bei der Bereitstellung auf fly.io müssen Umgebungsvariablen direkt in der fly.io-Umgebung gesetzt werden, anstatt eine .env-Datei zu verwenden. Die Anwendung wurde so konfiguriert, dass sie dieses Szenario behandeln kann.
+
+Um Umgebungsvariablen in fly.io zu setzen, verwenden Sie den folgenden Befehl:
+
+```bash
+fly secrets set SCHLÜSSEL=WERT [SCHLÜSSEL2=WERT2 ...]
+```
+
+Zum Beispiel:
+
+```bash
+   fly secrets set APP_PORT=8080 \
+     NODE_ENV="production" \
+     API_PREFIX="/api" \
+     DB_CONNECTION_STRING="mongodb+srv://benutzer:passwort@cluster.mongodb.net/?retryWrites=true&w=majority" \
+     DB_DATABASE="libraryDb" \
+     AUTH_SECRET="ihr-auth-secret"
+```
+
+Stellen Sie sicher, dass Sie alle erforderlichen Umgebungsvariablen setzen:
+
+- `APP_PORT`: Der Port, auf dem die Anwendung läuft (Standard: 8080)
+- `NODE_ENV`: Die Umgebung, in der die Anwendung läuft (sollte "production" für fly.io sein)
+- `API_PREFIX`: Das Präfix für API-Routen
+- `DB_CONNECTION_STRING`: MongoDB-Verbindungszeichenfolge (stellen Sie sicher, dass Sie eine gültige MongoDB Atlas-Verbindungszeichenfolge verwenden)
+- `DB_DATABASE`: MongoDB-Datenbankname
+- `AUTH_SECRET`: Geheimer Schlüssel für die Authentifizierung
+
+**Wichtig**: Bei der Bereitstellung auf fly.io ist es wichtig, dass Ihre MongoDB-Verbindungszeichenfolge korrekt konfiguriert ist. Die Anwendung verwendet SSL/TLS für die Verbindung zu MongoDB Atlas. Stellen Sie sicher, dass Ihr MongoDB Atlas-Cluster TLS 1.2 oder höher unterstützt und dass Ihre IP-Adresse in der MongoDB Atlas-Whitelist steht oder der Zugriff von überall erlaubt ist.
+
+### Deployment
+
+Um die Anwendung auf fly.io bereitzustellen:
+
+1. Bauen Sie die Anwendung:
+   ```bash
+   npm run build
+   ```
+
+2. Stellen Sie auf fly.io bereit:
+   ```bash
+   fly deploy
+   ```
+
+Weitere Informationen zur Bereitstellung auf fly.io finden Sie in der [fly.io-Dokumentation](https://fly.io/docs/languages-and-frameworks/node/).
+
 
 ## 📌 Datenmodelle
 
@@ -180,4 +230,3 @@ Jede Ausleihe speichert, welcher Benutzer welches Buch ausgeliehen hat.
 | `returnDate`| ISODate  | Datum der Rückgabe (null, falls offen)  |
 
 ---
-
