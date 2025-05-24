@@ -18,7 +18,7 @@ export interface Config {
 
 const foundEnv = dotenv.config()
 
-if (foundEnv.error) {
+if (foundEnv.error && process.env.NODE_ENV !== "production") {
   console.error(`⚠ Config: Couldn't find .env file`)
   console.info(`! Config: Parsing .env file failed, shutting down application.`)
   process.exit(1)

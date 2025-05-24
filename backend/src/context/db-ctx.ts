@@ -14,7 +14,7 @@ export async function createDBContext(config: { connectionString: string, databa
     return ctx
 
   } catch (error) {
-    console.error("⚠ Could not connect to Nestor database with error ", error)
+    console.error("⚠ Could not connect to Library database with error ", error)
     process.exit(1)
   }
 }

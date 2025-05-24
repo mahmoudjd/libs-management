@@ -1,15 +1,21 @@
 import express from 'express'
 import { AppContext } from '../context/app-ctx'
 import cors from 'cors'
-import cookieParser from 'cookie-parser'
+import compression from "compression"
+import cookieParser from "cookie-parser"
 
 import { apiRoutes } from "../api/api-routes"
+import helmet from "helmet";
 
 
 export function initExpress(app: express.Application, ctx: AppContext) {
   app.use(express.json())
   app.use(cors())
   app.use(cookieParser())
+  app.use(compression())
+  app.use(helmet())
+  app.enable("trust proxy")
+  app.disable("x-powered-by")
 
   app.use(ctx.config.api.prefix, apiRoutes(ctx))
 
