@@ -12,6 +12,7 @@ import {useLoans} from "@/lib/hooks/useLoans";
 import EditBookDialog from "@/components/edit-book-dialog";
 import BorrowBookDialog from "@/components/borrow-book-dialog";
 import { Input } from "@/components/ui/input";
+import {PageLayout} from "@/components/page-layout";
 
 export default function BooksPage() {
     const {data: session} = useSession();
@@ -63,9 +64,8 @@ export default function BooksPage() {
     );
 
     return (
-        <div className="p-6">
+        <PageLayout title="Books">
             <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
-                <h1 className="text-2xl font-bold">Books</h1>
                 <Input
                     type="text"
                     placeholder="Search by title or author"
@@ -124,6 +124,6 @@ export default function BooksPage() {
                 onOpenChange={setDeleteBookDialogOpen}
                 onDelete={handleDelete}
             />
-        </div>
+        </PageLayout>
     );
 }
