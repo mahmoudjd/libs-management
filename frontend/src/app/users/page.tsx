@@ -5,6 +5,8 @@ import {apiClient} from "@/lib/apiClient";
 import {useSession} from "next-auth/react";
 import {useRouter} from "next/navigation";
 import UserCard from "@/components/users/user-card";
+import {GridList} from "@/components/ui/grid-list";
+import {PageLayout} from "@/components/page-layout";
 
 type User = {
     _id: string;
@@ -46,14 +48,12 @@ export default function UsersPage() {
     }
 
     return (
-        <div className="p-8">
-            <h1 className="text-3xl font-bold mb-6">All Users</h1>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <PageLayout title="All Users" >
+            <GridList>
                 {users.map((user) => (
                     <UserCard key={user._id} user={user}/>
                 ))}
-            </div>
-        </div>
+            </GridList>
+        </PageLayout>
     );
 }
