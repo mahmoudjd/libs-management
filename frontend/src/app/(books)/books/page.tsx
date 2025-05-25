@@ -70,10 +70,10 @@ export default function BooksPage() {
                     type="text"
                     placeholder="Search by title or author"
                     onChange={(e) => handleFilterBooks(e.target.value)}
-                    className="w-full max-w-xs"
+                    className="w-full sm:max-w-xs"
                 />
                 {isAdmin && (
-                    <Button className="w-full max-w-40" onClick={() => setAddBookOpen(true)}>
+                    <Button className="w-full sm:max-w-40" onClick={() => setAddBookOpen(true)}>
                         Add New Book
                     </Button>
                 )}
