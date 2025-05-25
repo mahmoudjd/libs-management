@@ -26,5 +26,5 @@ RUN npm prune --omit=dev
 FROM base
 COPY --from=build /app /app
 
-EXPOSE 3000
+EXPOSE 8080
 CMD [ "npm", "run", "start" ]
