@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: libs-management-backend
+    env: docker
+    repo: https://github.com/mahmoudjd/libs-management.git
+    dockerfilePath: backend/Dockerfile
+    buildFilter:
+      paths:
+        - backend/**
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_CONNECTION_STRING
+        sync: false
+      - key: AUTH_SECRET
+        sync: false
