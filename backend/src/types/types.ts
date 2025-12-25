@@ -1,43 +1,47 @@
-import { z } from "zod"
-import { ObjectId } from "mongodb"
-
+import {z} from "zod"
+import {ObjectId} from "mongodb"
 
 /**
  * ObjectIdSchema is the schema for MongoDB ObjectIds
  */
-export const ObjectIdSchema = z.object({
-  _id: z.any(),
-})
+export const ObjectIdSchema = z.instanceof(ObjectId);
+
+
+export const DbBaseSchema = z.object({
+    _id: ObjectIdSchema,
+});
 
 export const BookSchema = z.object({
-  title: z.string(),
-  author: z.string(),
-  genre: z.string(),
-  available: z.boolean().default(true),
+    title: z.string(),
+    author: z.string(),
+    genre: z.string(),
+    available: z.boolean().default(true),
 })
 
-const BookDbSchema = ObjectIdSchema.merge(BookSchema)
+const BookDbSchema = DbBaseSchema.merge(BookSchema)
 
 export const UserSchema = z.object({
-  firstName: z.string(),
-  lastName: z.string(),
-  email: z.string(),
-  password: z.string(),
-  role: z.enum(["admin", "user"]),
+    firstName: z.string(),
+    lastName: z.string(),
+    email: z.string(),
+    password: z.string(),
+    role: z.enum(["admin", "user"]),
 })
 
-const UserDbSchema = ObjectIdSchema.merge(UserSchema)
+const UserDbSchema = DbBaseSchema.merge(UserSchema)
 
 export const LoanSchema = z.object({
-  bookId: z.instanceof((ObjectId)),
-  userId: z.instanceof(ObjectId),
-  loanDate: z.date(),
-  returnDate: z.date().nullable(),
+    bookId: z.instanceof((ObjectId)),
+    userId: z.instanceof(ObjectId),
+    loanDate: z.date(),
+    returnDate: z.date().nullable(),
 })
 
-const LoanDbSchema = ObjectIdSchema.merge(LoanSchema)
+const LoanDbSchema = DbBaseSchema.merge(LoanSchema)
 
-export type BookDb = z.infer<typeof BookDbSchema>
+export type BookCreateOrUpdate = z.infer<typeof BookSchema>; // without _id
+
+export type BookDb = z.infer<typeof BookDbSchema> // With _id
 
 export type UserDb = z.infer<typeof UserDbSchema>
 

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import type { AppContext } from '../context/app-ctx'
-import { BookSchema, type BookDb } from '../types/types'
+import {BookSchema, type BookDb, BookCreateOrUpdate} from '../types/types'
 import { ObjectId } from 'mongodb'
 
 /**
@@ -31,11 +31,13 @@ export const updateBookHandler = (appCtx: AppContext) => async (req: Request, re
 }
 
 /**
-  * Update book by id in database
-  * @param appCtx
-  * @returns (Promise<boolean>)
-  */
-const updateBookInDB = async (appCtx: AppContext, bookId: string, updatedBook: BookDb) => {
+ * Update book by id in database
+ * @param appCtx
+ * @param bookId
+ * @param updatedBook
+ * @returns (Promise<boolean>)
+ */
+const updateBookInDB = async (appCtx: AppContext, bookId: string, updatedBook: BookCreateOrUpdate) => {
   const success = await appCtx.dbCtx.books.updateOne({ _id: new ObjectId(bookId) },
     { "$set": { ...updatedBook } })
 
