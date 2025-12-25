@@ -2,7 +2,7 @@ import NextAuth, {NextAuthOptions, Session} from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { googleLogin, loginUser } from "@/lib/hooks/login";
-import { env } from "@/env.mjs";
+import { env } from "@/env";
 
 export type { Session } from "next-auth"
 
@@ -63,7 +63,7 @@ const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ account, profile }) {
       if (account?.provider === "google" ) {
-        return !!profile?.email // && profile.email.endsWith("@gmail.com")
+        return !!profile?.email
       }
       // The endpoint doesn't exist, so we'll just return true to allow sign-in
       // In a production app, you would implement proper user lookup/creation
@@ -72,11 +72,11 @@ const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }) {
       if (account?.provider === "google") {
         // For Google users, we need to set all the properties used in the session
-        const name = user?.name
+        const name = user?.name.split(" ")
         const responseGoogleLog = await googleLogin({
           email: user?.email!,
-          firstName:name?.split(" ")[0]!,
-          lastName: name?.slice(1)!
+          firstName:name[0]!,
+          lastName: name?.slice(1).join(" ")!
         })
         const googleUser = responseGoogleLog?.user
         token.userId = googleUser.id;

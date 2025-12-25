@@ -1,8 +1,8 @@
-
 "use client"
-import { env } from "@/env.mjs"
 import axios from "axios"
-import { getSession } from "next-auth/react"
+import {getSession} from "next-auth/react"
+import {env} from "@/env";
+
 
 const apiClient = axios.create({
     baseURL: env.NEXT_PUBLIC_API_HOST_CLIENT,
@@ -19,4 +19,4 @@ apiClient.interceptors.request.use(async (config) => {
     return config
 })
 
-export { apiClient }
+export {apiClient}
