@@ -58,6 +58,7 @@ function StatItem({
 
 export const LoanTrendsChart: React.FC<LoanTrendsChartProps> = ({ trends }) => {
   const { points } = trends
+  const hasRangeActivity = trends.totals.loaned > 0 || trends.totals.returned > 0
 
   const maxBarValue = useMemo(() => {
     const max = Math.max(
@@ -114,6 +115,12 @@ export const LoanTrendsChart: React.FC<LoanTrendsChartProps> = ({ trends }) => {
         <StatItem label="Active Now" value={trends.totals.activeNow} valueClassName="text-slate-700" />
         <StatItem label="Overdue Now" value={trends.totals.overdueNow} valueClassName="text-red-700" />
       </div>
+
+      {!hasRangeActivity && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          No loan activity in this range yet. Try 3M or 1Y to see more data.
+        </div>
+      )}
 
       <div className="overflow-x-auto">
         <div style={{ minWidth: `${chartMinWidth}px` }}>

@@ -17,6 +17,12 @@ interface TimeBucket {
   end: Date
 }
 
+interface TrendLoan {
+  loanDate: Date
+  returnDate: Date
+  returnedAt: Date | null
+}
+
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 function parseRange(value: unknown): LoanTrendRange {
@@ -113,7 +119,38 @@ function getBuckets(range: LoanTrendRange, now: Date) {
   }
 }
 
-function isWithinPeriod(date: Date | null | undefined, from: Date, to: Date) {
+function toValidDate(value: unknown) {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value
+  }
+
+  if (typeof value === "string" || typeof value === "number") {
+    const parsed = new Date(value)
+    return Number.isNaN(parsed.getTime()) ? null : parsed
+  }
+
+  return null
+}
+
+function toTrendLoan(row: Record<string, unknown>) {
+  const loanDate = toValidDate(row.loanDate)
+  const returnDate = toValidDate(row.returnDate)
+  const returnedAt = toValidDate(row.returnedAt)
+
+  if (!loanDate || !returnDate) {
+    return null
+  }
+
+  const trendLoan: TrendLoan = {
+    loanDate,
+    returnDate,
+    returnedAt,
+  }
+
+  return trendLoan
+}
+
+function isWithinPeriod(date: Date | null, from: Date, to: Date) {
   if (!date) {
     return false
   }
@@ -121,14 +158,14 @@ function isWithinPeriod(date: Date | null | undefined, from: Date, to: Date) {
   return timestamp >= from.getTime() && timestamp <= to.getTime()
 }
 
-function isActiveAtTime(loan: LoanDb, at: Date) {
+function isActiveAtTime(loan: TrendLoan, at: Date) {
   if (loan.loanDate.getTime() > at.getTime()) {
     return false
   }
   return !loan.returnedAt || loan.returnedAt.getTime() > at.getTime()
 }
 
-function isOverdueAtTime(loan: LoanDb, at: Date) {
+function isOverdueAtTime(loan: TrendLoan, at: Date) {
   return isActiveAtTime(loan, at) && loan.returnDate.getTime() < at.getTime()
 }
 
@@ -146,14 +183,7 @@ export const getDashboardLoanTrendsHandler = (appCtx: AppContext) => async (req:
   const { buckets, start, granularity } = getBuckets(range, now)
   const staffUser = isStaff(req.user)
 
-  const filter: Filter<LoanDb> = {
-    loanDate: { $lte: now },
-    $or: [
-      { loanDate: { $gte: start } },
-      { returnedAt: null },
-      { returnedAt: { $gte: start } },
-    ],
-  }
+  const filter: Filter<LoanDb> = {}
 
   if (!staffUser) {
     const parsedUserId = parseObjectId(req.user.id)
@@ -164,13 +194,16 @@ export const getDashboardLoanTrendsHandler = (appCtx: AppContext) => async (req:
   }
 
   try {
-    const loans = await appCtx.dbCtx.loans.find(filter, {
+    const rawLoans = await appCtx.dbCtx.loans.find(filter, {
       projection: {
         loanDate: 1,
         returnDate: 1,
         returnedAt: 1,
       },
     }).toArray()
+    const loans = rawLoans
+      .map((row) => toTrendLoan(row as unknown as Record<string, unknown>))
+      .filter((row): row is TrendLoan => row !== null)
 
     const points = buckets.map((bucket) => {
       const loanedCount = loans.filter((loan) => isWithinPeriod(loan.loanDate, bucket.start, bucket.end)).length
