@@ -11,7 +11,8 @@ export const loginUser = (appCtx: AppContext) => async (req: Request, res: Respo
     return res.status(400).json({ message: "Email and password are required." });
   }
 
-  const user = await appCtx.dbCtx.users.findOne({ email });
+  const normalizedEmail = String(email).trim().toLowerCase()
+  const user = await appCtx.dbCtx.users.findOne({ email: normalizedEmail });
 
   if (!user) {
     return res.status(401).json({ message: "Invalid login credentials." });
@@ -25,7 +26,13 @@ export const loginUser = (appCtx: AppContext) => async (req: Request, res: Respo
 
   // Generate JWT token
   const token = jwt.sign(
-    { userId: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role },
+    {
+      userId: user._id.toHexString(),
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role
+    },
     appCtx.config.auth.secret,
     { expiresIn: "1d" }
   );

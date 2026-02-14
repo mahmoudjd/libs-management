@@ -8,9 +8,7 @@ import { deleteBookHandler } from './delete-book';
 import { authentication } from '../middlewares/authentication';
 import { updateBookHandler } from './update-book';
 import {changeBookAvailability} from "./change-book-availability";
-
-
-const booksRouter = Router({ mergeParams: true });
+import { toRequestHandler } from "../lib/to-request-handler";
 
 /**
  * Books routes
@@ -18,20 +16,16 @@ const booksRouter = Router({ mergeParams: true });
  * @param appRouter
  */
 export function booksRoutes(appCtx: AppContext, appRouter: Router) {
+  const booksRouter = Router({ mergeParams: true });
+  booksRouter.route('/')
+    .get(toRequestHandler(getBooksHandler(appCtx)))
+    .post(toRequestHandler(authentication(appCtx)), toRequestHandler(createBookHandler(appCtx)))
+
+  booksRouter.route('/:bookId')
+    .delete(toRequestHandler(authentication(appCtx)), toRequestHandler(deleteBookHandler(appCtx)))
+    .put(toRequestHandler(authentication(appCtx)), toRequestHandler(updateBookHandler(appCtx)))
+  booksRouter.route('/:bookId/change-availability')
+      .put(toRequestHandler(authentication(appCtx)), toRequestHandler(changeBookAvailability(appCtx)))
+
   appRouter.use('/books', booksRouter);
-  booksRoute(appCtx, booksRouter);
 }
-
-function booksRoute(appCtx: AppContext, router: Router) {
-  router.route('/')
-    .get(getBooksHandler(appCtx))
-    .post(authentication(appCtx), createBookHandler(appCtx))
-
-  router.route('/:bookId')
-    .delete(authentication(appCtx), deleteBookHandler(appCtx))
-    .put(authentication(appCtx), updateBookHandler(appCtx))
-  router.route('/:bookId/change-availability')
-      .put(authentication(appCtx), changeBookAvailability(appCtx))
-}
-
-

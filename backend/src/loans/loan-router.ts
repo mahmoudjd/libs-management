@@ -7,22 +7,22 @@ import { getLoansHandler } from "./get-loans";
 import { getLoansByUserIdHandler } from "./get-user-loans"
 
 import type { AppContext } from "../context/app-ctx";
-
-const loanRouter = Router({ mergeParams: true });
+import { toRequestHandler } from "../lib/to-request-handler";
 
 export function loanRoutes(appCtx: AppContext, appRouter: Router) {
+  const loanRouter = Router({ mergeParams: true });
+
   loanRouter.route("/")
-    .get(authentication(appCtx), getLoansHandler(appCtx))
-    .post(authentication(appCtx), createLoanHandler(appCtx));
+    .get(toRequestHandler(authentication(appCtx)), toRequestHandler(getLoansHandler(appCtx)))
+    .post(toRequestHandler(authentication(appCtx)), toRequestHandler(createLoanHandler(appCtx)));
 
   loanRouter.route("/:userId")
-    .get(authentication(appCtx), getLoansByUserIdHandler(appCtx))
+    .get(toRequestHandler(authentication(appCtx)), toRequestHandler(getLoansByUserIdHandler(appCtx)))
 
   loanRouter.route("/:loanId")
-    .put(authentication(appCtx), updateLoanHandler(appCtx))
-    .delete(authentication(appCtx), deleteLoandHandler(appCtx));
+    .put(toRequestHandler(authentication(appCtx)), toRequestHandler(updateLoanHandler(appCtx)))
+    .delete(toRequestHandler(authentication(appCtx)), toRequestHandler(deleteLoandHandler(appCtx)));
 
 
   appRouter.use("/loans", loanRouter);
 }
-

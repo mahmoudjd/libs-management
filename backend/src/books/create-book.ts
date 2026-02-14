@@ -1,15 +1,16 @@
-import { ObjectId } from 'mongodb'
 import { Response } from 'express'
+import { ObjectId } from "mongodb";
 import type { AppContext } from '../context/app-ctx'
 import { BookSchema } from '../types/types'
+import type { AuthenticatedRequest } from '../types/http'
 
 /**
   * Create a new book handler
   * @param appCtx
   */
-export const createBookHandler = (appCtx: AppContext) => async (req: any, res: Response) => {
+export const createBookHandler = (appCtx: AppContext) => async (req: AuthenticatedRequest, res: Response) => {
   try {
-    if (!req?.user || req?.user.role !== "admin") {
+    if (!req.user || req.user.role !== "admin") {
       return res.status(403).json({ error: "Only admins can add books" });
     }
 
@@ -28,10 +29,12 @@ export const createBookHandler = (appCtx: AppContext) => async (req: any, res: R
       _id: new ObjectId()
     })
 
-    return res.status(201).json(result)
+    return res.status(201).json({
+      _id: result.insertedId,
+      ...book
+    })
   } catch (error) {
     console.error(`⚠ Books: ${error}`)
     return res.status(500).json({ error: 'Internal Server Error' })
   }
 }
-

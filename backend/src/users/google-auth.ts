@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import { ObjectId } from "mongodb";
 
 import type { AppContext } from "../context/app-ctx";
 
@@ -10,32 +11,36 @@ export const googleAuth = (appCtx: AppContext) => async (req: Request, res: Resp
     return res.status(400).json({ message: "Email is required." });
   }
 
+  const normalizedEmail = String(email).trim().toLowerCase()
+
   // Check if user already exists
-  let user = await appCtx.dbCtx.users.findOne({ email });
+  let user = await appCtx.dbCtx.users.findOne({ email: normalizedEmail });
 
   if (!user) {
     // Create new user if doesn't exist
     const newUser = {
-      email,
+      _id: new ObjectId(),
+      email: normalizedEmail,
       firstName: firstName || '',
       lastName: lastName || '',
       // No password for Google users
       password: '', 
       // Default role for new users
-      role: 'user'
+      role: 'user' as const
     };
 
-    const result = await appCtx.dbCtx.users.insertOne(newUser);
-    user = {
-      ...newUser,
-      _id: result.insertedId
-    };
+    await appCtx.dbCtx.users.insertOne(newUser);
+    user = newUser;
+  }
+
+  if (!user) {
+    return res.status(500).json({ message: "User creation failed." });
   }
 
   // Generate JWT token
   const token = jwt.sign(
     { 
-      userId: user._id, 
+      userId: user._id.toHexString(),
       firstName: user.firstName, 
       lastName: user.lastName, 
       email: user.email, 

@@ -16,7 +16,7 @@ export interface Config {
     }
 }
 
-const foundEnv = dotenv.config({path: ['.env'], debug: true})
+const foundEnv = dotenv.config({ path: ".env" })
 
 if (foundEnv.error && process.env.NODE_ENV !== "production") {
     console.error(`⚠ Config: Couldn't find .env file`)
@@ -25,48 +25,48 @@ if (foundEnv.error && process.env.NODE_ENV !== "production") {
 }
 
 
-function getConfig() {
-    const env = process.env
-    const config: Config = {
-        api: {
-            prefix: env.API_PREFIX as unknown as string
-        },
-        app: {
-            port: parseInt(env.APP_PORT || "8080")
-        },
-        db: {
-            connectionString: env.DB_CONNECTION_STRING as unknown as string,
-            database: env.DB_DATABASE as unknown as string
-        },
-        auth: {
-            secret: env.AUTH_SECRET as unknown as string
-        }
+function getRequiredEnv(name: string) {
+    const value = process.env[name]
+    if (!value || value.trim() === "") {
+        throw new Error(`Missing required environment variable: ${name}`)
     }
-
-    return config;
+    return value
 }
 
-function sanitaizeConfig(config: Config) {
-    let isEnvFileValid = true
-    for (const [key, value] of Object.entries(config)) {
-        if (value === undefined) {
-            console.error(`⚠ Missing Environment Variable: ${key}`)
-            isEnvFileValid = false
+function getConfig() {
+    const rawPort = process.env.APP_PORT || "8080"
+    const parsedPort = Number.parseInt(rawPort, 10)
+
+    if (Number.isNaN(parsedPort) || parsedPort <= 0) {
+        throw new Error("APP_PORT must be a positive number")
+    }
+
+    const config: Config = {
+        api: {
+            prefix: process.env.API_PREFIX?.trim() || "/api"
+        },
+        app: {
+            port: parsedPort
+        },
+        db: {
+            connectionString: getRequiredEnv("DB_CONNECTION_STRING"),
+            database: getRequiredEnv("DB_DATABASE")
+        },
+        auth: {
+            secret: getRequiredEnv("AUTH_SECRET")
         }
     }
 
-    if (!isEnvFileValid) {
-        console.info(
-            `! Config: Parsing .env file failed, shutting down application.`,
-        )
-        process.exit(1)
-    }
-
-    return config as Config
+    return config
 }
 
 export const loadConfig = () => {
-    const config = getConfig()
-    const sanitaizedConfig = sanitaizeConfig(config)
-    return sanitaizedConfig
+    try {
+        return getConfig()
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        console.error(`⚠ Config: ${message}`)
+        console.info(`! Config: Parsing .env file failed, shutting down application.`)
+        process.exit(1)
+    }
 }

@@ -12,19 +12,19 @@ export const DbBaseSchema = z.object({
 });
 
 export const BookSchema = z.object({
-    title: z.string(),
-    author: z.string(),
-    genre: z.string(),
+    title: z.string().trim().min(1),
+    author: z.string().trim().min(1),
+    genre: z.string().trim().min(1),
     available: z.boolean().default(true),
 })
 
 const BookDbSchema = DbBaseSchema.merge(BookSchema)
 
 export const UserSchema = z.object({
-    firstName: z.string(),
-    lastName: z.string(),
-    email: z.string(),
-    password: z.string(),
+    firstName: z.string().trim().min(1),
+    lastName: z.string().trim().min(1),
+    email: z.string().trim().email(),
+    password: z.string().min(1),
     role: z.enum(["admin", "user"]),
 })
 
@@ -46,4 +46,3 @@ export type BookDb = z.infer<typeof BookDbSchema> // With _id
 export type UserDb = z.infer<typeof UserDbSchema>
 
 export type LoanDb = z.infer<typeof LoanDbSchema>
-

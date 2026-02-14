@@ -1,78 +1,112 @@
-import { Request, Response } from "express";
-import type { AppContext } from "../context/app-ctx";
-import { ObjectId } from "mongodb";
-import { LoanSchema } from "../types/types";
+import { Response } from "express"
+import { ObjectId } from "mongodb"
 
-export const createLoanHandler = (appCtx: AppContext) => async (req: Request, res: Response) => {
-  const { bookId, userId, returnDate } = req.body;
+import type { AppContext } from "../context/app-ctx"
+import { LoanSchema } from "../types/types"
+import { parseObjectId } from "../lib/object-id"
+import { canAccessUserResource, type AuthenticatedRequest } from "../types/http"
+
+interface CreateLoanInput {
+  bookId: ObjectId
+  userId: ObjectId
+  returnDate: Date
+  method: string
+  url: string
+}
+
+export const createLoanHandler = (appCtx: AppContext) => async (req: AuthenticatedRequest, res: Response) => {
+  const { bookId, userId, returnDate } = req.body
+
+  if (!req.user) {
+    return res.status(401).json({ error: "Unauthorized" })
+  }
 
   if (!bookId || !userId || !returnDate) {
-    return res.status(400).json({ error: "Missing required fields" });
+    return res.status(400).json({ error: "Missing required fields" })
+  }
+
+  const requestedBookId = String(bookId)
+  const requestedUserId = String(userId)
+
+  if (!canAccessUserResource(req, requestedUserId)) {
+    return res.status(403).json({ error: "Forbidden" })
+  }
+
+  const parsedBookId = parseObjectId(requestedBookId)
+  const parsedUserId = parseObjectId(requestedUserId)
+  if (!parsedBookId || !parsedUserId) {
+    return res.status(400).json({ error: "Invalid bookId or userId" })
+  }
+
+  const parsedReturnDate = new Date(returnDate)
+  if (Number.isNaN(parsedReturnDate.getTime())) {
+    return res.status(400).json({ error: "Invalid returnDate" })
   }
 
   try {
-    const loan = await createLoan(appCtx, bookId, userId, returnDate, req);
+    const loan = await createLoan(appCtx, {
+      bookId: parsedBookId,
+      userId: parsedUserId,
+      returnDate: parsedReturnDate,
+      method: req.method,
+      url: req.originalUrl,
+    })
+
     if (!loan) {
-      return res.status(400).json({ error: "Loan creation failed" });
+      return res.status(409).json({ error: "Book is not available" })
     }
-    return res.status(201).json(loan);
+
+    return res.status(201).json(loan)
   } catch (error) {
-    console.error("Error creating loan:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    console.error("Error creating loan:", error)
+    return res.status(500).json({ error: "Internal server error" })
   }
-};
+}
 
-async function createLoan(appCtx: AppContext, bookId: string, userId: string, returnDate: string, req: Request) {
-  const book = await appCtx.dbCtx.books.findOne({ _id: new ObjectId(bookId) });
+async function createLoan(appCtx: AppContext, input: CreateLoanInput) {
+  const reservedBook = await appCtx.dbCtx.books.findOneAndUpdate(
+    { _id: input.bookId, available: true },
+    { $set: { available: false } },
+    { returnDocument: "before" }
+  )
 
-  if (!book) {
-    console.debug(`Book with ID ${bookId} not found`);
-    return null;
-  }
-
-  if (!book.available) {
-    console.debug(`Book with ID ${bookId} is already loaned out`);
-    return null;
+  if (!reservedBook) {
+    return null
   }
 
-  // Loan-Daten validieren
   const parseResult = LoanSchema.safeParse({
-    bookId: new ObjectId(bookId),
-    userId: new ObjectId(userId),
-    returnDate: new Date(returnDate),
+    bookId: input.bookId,
+    userId: input.userId,
+    returnDate: input.returnDate,
     loanDate: new Date(),
-  });
+  })
 
   if (!parseResult.success) {
     console.debug(
-      `Invalid request body for method ${req.method} ${req.originalUrl}: ${parseResult.error.toString()}`
-    );
-    return null;
+      `Invalid request body for method ${input.method} ${input.url}: ${parseResult.error.toString()}`
+    )
+    await appCtx.dbCtx.books.updateOne({ _id: input.bookId }, { $set: { available: true } })
+    return null
   }
 
-  const loan = parseResult.data;
+  const loan = parseResult.data
 
-  // Loan in die Datenbank einfügen
-  const result = await appCtx.dbCtx.loans.insertOne({
-    ...loan,
-    _id: new ObjectId(),
-  });
+  try {
+    const result = await appCtx.dbCtx.loans.insertOne({
+      ...loan,
+      _id: new ObjectId(),
+    })
 
-  if (!result.insertedId) {
-    console.error("Failed to insert loan into the database");
-    return null;
+    if (!result.acknowledged) {
+      throw new Error("Failed to insert loan into the database")
+    }
+
+    return {
+      _id: result.insertedId,
+      ...loan,
+    }
+  } catch (error) {
+    await appCtx.dbCtx.books.updateOne({ _id: input.bookId }, { $set: { available: true } })
+    throw error
   }
-
-  // Buch als nicht verfügbar markieren
-  const updateResult = await appCtx.dbCtx.books.updateOne(
-    { _id: new ObjectId(bookId) },
-    { $set: { available: false } }
-  );
-
-  if (updateResult.modifiedCount === 0) {
-    console.error(`Failed to update book availability for book ID: ${bookId}`);
-    return null;
-  }
-
-  return loan;
 }

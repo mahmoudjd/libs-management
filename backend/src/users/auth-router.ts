@@ -9,18 +9,19 @@ import {authentication} from "../middlewares/authentication";
 import type {AppContext} from "../context/app-ctx";
 import {getUsers} from "./get-users";
 import {googleAuth} from "./google-auth";
+import { toRequestHandler } from "../lib/to-request-handler";
 
 export function authRoutes(appCtx: AppContext, appRouter: Router) {
     const authRouter = Router({mergeParams: true});
 
-    authRouter.post("/login", loginUser(appCtx));
-    authRouter.post("/google-login", googleAuth(appCtx))
-    authRouter.post("/signup", signupUser(appCtx));
+    authRouter.post("/login", toRequestHandler(loginUser(appCtx)));
+    authRouter.post("/google-login", toRequestHandler(googleAuth(appCtx)))
+    authRouter.post("/signup", toRequestHandler(signupUser(appCtx)));
 
     authRouter.route("/users")
-        .get(authentication(appCtx), getUsers(appCtx))
+        .get(toRequestHandler(authentication(appCtx)), toRequestHandler(getUsers(appCtx)))
     authRouter.route("/get-user/:userId")
-        .get(authentication(appCtx), getUser(appCtx))
+        .get(toRequestHandler(authentication(appCtx)), toRequestHandler(getUser(appCtx)))
 
     appRouter.use("/auth", authRouter);
 }
