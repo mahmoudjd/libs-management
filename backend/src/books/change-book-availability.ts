@@ -62,10 +62,9 @@ export const changeBookAvailability = (appCtx: AppContext) => async (req: Authen
       nextAvailableCopies = maxAvailableCopies
     }
 
-    if (nextAvailableCopies > maxAvailableCopies) {
-      return res.status(400).json({
-        error: "availableCopies exceeds available stock after active loans",
-      })
+    const availabilityAdjusted = nextAvailableCopies > maxAvailableCopies
+    if (availabilityAdjusted) {
+      nextAvailableCopies = maxAvailableCopies
     }
 
     const updatedBook = await updateBookAvailabilityInDB(appCtx, parsedBookId, nextAvailableCopies)
@@ -92,13 +91,21 @@ export const changeBookAvailability = (appCtx: AppContext) => async (req: Authen
         previousAvailableCopies: stock.availableCopies,
         nextAvailableCopies,
         fulfilledReservations,
+        activeLoanCount,
+        maxAvailableCopies,
+        availabilityAdjusted,
       },
       actor: req.user,
     })
 
     return res.status(200).json({
-      message: "Book availability updated successfully",
+      message: availabilityAdjusted
+        ? "Book availability updated successfully (available copies were adjusted to match active loans)"
+        : "Book availability updated successfully",
       fulfilledReservations,
+      availabilityAdjusted,
+      maxAvailableCopies,
+      activeLoanCount,
     })
   } catch (error) {
     console.error(`⚠ Books: ${error}`)

@@ -66,10 +66,9 @@ export const updateBookHandler = (appCtx: AppContext) => async (req: Authenticat
     }
 
     const maxAvailableCopies = nextTotalCopies - activeLoanCount
-    if (nextAvailableCopies > maxAvailableCopies) {
-      return res.status(400).json({
-        error: "availableCopies exceeds available stock after active loans",
-      })
+    const availabilityAdjusted = nextAvailableCopies > maxAvailableCopies
+    if (availabilityAdjusted) {
+      nextAvailableCopies = maxAvailableCopies
     }
 
     const now = new Date()
@@ -111,13 +110,21 @@ export const updateBookHandler = (appCtx: AppContext) => async (req: Authenticat
           totalCopies: updatedBook.totalCopies,
           availableCopies: updatedBook.availableCopies,
         },
+        activeLoanCount,
+        maxAvailableCopies,
+        availabilityAdjusted,
       },
       actor: req.user,
     })
 
     return res.status(200).json({
-      message: "Book updated successfully",
+      message: availabilityAdjusted
+        ? "Book updated successfully (available copies were adjusted to match active loans)"
+        : "Book updated successfully",
       book: toBookResponse(updatedBook),
+      availabilityAdjusted,
+      maxAvailableCopies,
+      activeLoanCount,
     })
   } catch (error) {
     console.error(`⚠ Books: ${error}`)
