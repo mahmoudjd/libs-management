@@ -2,14 +2,18 @@ import { Response } from "express"
 import type { ObjectId } from "mongodb"
 
 import { AppContext } from "../context/app-ctx"
+import { writeAuditLog } from "../audit/audit-log"
+import { isStaff } from "../lib/authorization"
 import { parseObjectId } from "../lib/object-id"
 import type { AuthenticatedRequest } from "../types/http"
+import { fulfillNextReservationIfPossible } from "../reservations/reservation-service"
+import { normalizeLoan } from "./loan-utils"
 
 export const deleteLoandHandler = (appCtx: AppContext) => async (req: AuthenticatedRequest, res: Response) => {
   const { loanId } = req.params
 
-  if (!req.user || req.user.role !== "admin") {
-    return res.status(403).json({ error: "Forbidden" })
+  if (!isStaff(req.user)) {
+    return res.status(403).json({ error: "Only staff can delete loans" })
   }
 
   if (!loanId) {
@@ -22,10 +26,21 @@ export const deleteLoandHandler = (appCtx: AppContext) => async (req: Authentica
   }
 
   try {
-    const deleted = await deleteLoan(appCtx, parsedLoanId)
-    if (!deleted) {
+    const deletedLoan = await deleteLoan(appCtx, parsedLoanId)
+    if (!deletedLoan) {
       return res.status(404).json({ error: "Loan not found" })
     }
+
+    await writeAuditLog(appCtx, {
+      action: "loan.deleted",
+      entityType: "loan",
+      entityId: parsedLoanId.toHexString(),
+      details: {
+        bookId: deletedLoan.bookId.toHexString(),
+        userId: deletedLoan.userId.toHexString(),
+      },
+      actor: req.user,
+    })
 
     return res.status(200).json({ message: "Loan deleted successfully" })
   } catch (error) {
@@ -37,14 +52,27 @@ export const deleteLoandHandler = (appCtx: AppContext) => async (req: Authentica
 const deleteLoan = async (appCtx: AppContext, loanId: ObjectId) => {
   const existingLoan = await appCtx.dbCtx.loans.findOne({ _id: loanId })
   if (!existingLoan) {
-    return false
+    return null
   }
+
+  const normalizedLoan = normalizeLoan(existingLoan)
 
   const deleteResult = await appCtx.dbCtx.loans.deleteOne({ _id: loanId })
   if (deleteResult.deletedCount === 0) {
-    return false
+    return null
   }
 
-  await appCtx.dbCtx.books.updateOne({ _id: existingLoan.bookId }, { $set: { available: true } })
-  return true
+  if (!normalizedLoan.returnedAt) {
+    await appCtx.dbCtx.books.updateOne(
+      { _id: normalizedLoan.bookId },
+      {
+        $inc: { availableCopies: 1 },
+        $set: { updatedAt: new Date() },
+      }
+    )
+
+    await fulfillNextReservationIfPossible(appCtx, normalizedLoan.bookId)
+  }
+
+  return normalizedLoan
 }

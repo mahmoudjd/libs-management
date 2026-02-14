@@ -10,6 +10,7 @@ import type {AppContext} from "../context/app-ctx";
 import {getUsers} from "./get-users";
 import {googleAuth} from "./google-auth";
 import { toRequestHandler } from "../lib/to-request-handler";
+import { updateUserRoleHandler } from "./update-user-role";
 
 export function authRoutes(appCtx: AppContext, appRouter: Router) {
     const authRouter = Router({mergeParams: true});
@@ -22,6 +23,8 @@ export function authRoutes(appCtx: AppContext, appRouter: Router) {
         .get(toRequestHandler(authentication(appCtx)), toRequestHandler(getUsers(appCtx)))
     authRouter.route("/get-user/:userId")
         .get(toRequestHandler(authentication(appCtx)), toRequestHandler(getUser(appCtx)))
+    authRouter.route("/users/:userId/role")
+      .patch(toRequestHandler(authentication(appCtx)), toRequestHandler(updateUserRoleHandler(appCtx)))
 
     appRouter.use("/auth", authRouter);
 }

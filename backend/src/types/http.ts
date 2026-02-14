@@ -1,11 +1,13 @@
 import type { Request } from "express"
 
+import type { UserRole } from "./types"
+
 export interface AuthenticatedUser {
   id: string
   firstName: string
   lastName: string
   email: string
-  role: "admin" | "user"
+  role: UserRole
 }
 
 export type AuthenticatedRequest = Request & {

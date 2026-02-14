@@ -2,16 +2,21 @@ import { Response } from "express"
 import { ObjectId } from "mongodb"
 
 import type { AppContext } from "../context/app-ctx"
+import { writeAuditLog } from "../audit/audit-log"
+import { isStaff } from "../lib/authorization"
 import { LoanSchema } from "../types/types"
 import { parseObjectId } from "../lib/object-id"
 import { canAccessUserResource, type AuthenticatedRequest } from "../types/http"
+import {
+  fulfillPendingReservationForUser,
+  hasPendingReservationForOtherUser,
+} from "../reservations/reservation-service"
+import { toLoanResponse } from "./loan-utils"
 
 interface CreateLoanInput {
   bookId: ObjectId
   userId: ObjectId
   returnDate: Date
-  method: string
-  url: string
 }
 
 export const createLoanHandler = (appCtx: AppContext) => async (req: AuthenticatedRequest, res: Response) => {
@@ -28,7 +33,7 @@ export const createLoanHandler = (appCtx: AppContext) => async (req: Authenticat
   const requestedBookId = String(bookId)
   const requestedUserId = String(userId)
 
-  if (!canAccessUserResource(req, requestedUserId)) {
+  if (!isStaff(req.user) && !canAccessUserResource(req, requestedUserId)) {
     return res.status(403).json({ error: "Forbidden" })
   }
 
@@ -44,29 +49,57 @@ export const createLoanHandler = (appCtx: AppContext) => async (req: Authenticat
   }
 
   try {
+    const user = await appCtx.dbCtx.users.findOne({ _id: parsedUserId })
+    if (!user) {
+      return res.status(404).json({ error: "User not found" })
+    }
+
     const loan = await createLoan(appCtx, {
       bookId: parsedBookId,
       userId: parsedUserId,
       returnDate: parsedReturnDate,
-      method: req.method,
-      url: req.originalUrl,
-    })
+    }, req.user)
+
+    if (loan === "reserved") {
+      return res.status(409).json({ error: "Book is reserved for another user" })
+    }
 
     if (!loan) {
       return res.status(409).json({ error: "Book is not available" })
     }
 
-    return res.status(201).json(loan)
+    return res.status(201).json(toLoanResponse(loan))
   } catch (error) {
     console.error("Error creating loan:", error)
     return res.status(500).json({ error: "Internal server error" })
   }
 }
 
-async function createLoan(appCtx: AppContext, input: CreateLoanInput) {
+async function createLoan(appCtx: AppContext, input: CreateLoanInput, actor: AuthenticatedRequest["user"]) {
+  const existingBook = await appCtx.dbCtx.books.findOne({ _id: input.bookId })
+  if (!existingBook) {
+    return null
+  }
+
+  const reservedForAnotherUser = await hasPendingReservationForOtherUser(
+    appCtx,
+    input.bookId,
+    input.userId
+  )
+  if (reservedForAnotherUser) {
+    return "reserved" as const
+  }
+
+  const now = new Date()
   const reservedBook = await appCtx.dbCtx.books.findOneAndUpdate(
-    { _id: input.bookId, available: true },
-    { $set: { available: false } },
+    {
+      _id: input.bookId,
+      availableCopies: { $gt: 0 },
+    },
+    {
+      $inc: { availableCopies: -1 },
+      $set: { updatedAt: now },
+    },
     { returnDocument: "before" }
   )
 
@@ -78,35 +111,46 @@ async function createLoan(appCtx: AppContext, input: CreateLoanInput) {
     bookId: input.bookId,
     userId: input.userId,
     returnDate: input.returnDate,
-    loanDate: new Date(),
+    loanDate: now,
+    returnedAt: null,
+    extensionCount: 0,
+    source: "direct",
   })
 
   if (!parseResult.success) {
-    console.debug(
-      `Invalid request body for method ${input.method} ${input.url}: ${parseResult.error.toString()}`
-    )
-    await appCtx.dbCtx.books.updateOne({ _id: input.bookId }, { $set: { available: true } })
+    await appCtx.dbCtx.books.updateOne({ _id: input.bookId }, { $inc: { availableCopies: 1 } })
     return null
   }
 
   const loan = parseResult.data
+  const insertedLoanId = new ObjectId()
 
   try {
-    const result = await appCtx.dbCtx.loans.insertOne({
+    await appCtx.dbCtx.loans.insertOne({
       ...loan,
-      _id: new ObjectId(),
+      _id: insertedLoanId,
     })
 
-    if (!result.acknowledged) {
-      throw new Error("Failed to insert loan into the database")
-    }
+    await fulfillPendingReservationForUser(appCtx, input.bookId, input.userId, actor)
+
+    await writeAuditLog(appCtx, {
+      action: "loan.created",
+      entityType: "loan",
+      entityId: insertedLoanId.toHexString(),
+      details: {
+        bookId: input.bookId.toHexString(),
+        userId: input.userId.toHexString(),
+        source: "direct",
+      },
+      actor,
+    })
 
     return {
-      _id: result.insertedId,
+      _id: insertedLoanId,
       ...loan,
     }
   } catch (error) {
-    await appCtx.dbCtx.books.updateOne({ _id: input.bookId }, { $set: { available: true } })
+    await appCtx.dbCtx.books.updateOne({ _id: input.bookId }, { $inc: { availableCopies: 1 } })
     throw error
   }
 }

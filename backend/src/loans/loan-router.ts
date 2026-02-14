@@ -5,6 +5,9 @@ import { updateLoanHandler } from "./update-loan";
 import { deleteLoandHandler } from "./delete-loan";
 import { getLoansHandler } from "./get-loans";
 import { getLoansByUserIdHandler } from "./get-user-loans"
+import { extendLoanHandler } from "./extend-loan";
+import { getOverdueLoansHandler } from "./get-overdue-loans";
+import { sendOverdueRemindersHandler } from "./send-overdue-reminders";
 
 import type { AppContext } from "../context/app-ctx";
 import { toRequestHandler } from "../lib/to-request-handler";
@@ -16,8 +19,17 @@ export function loanRoutes(appCtx: AppContext, appRouter: Router) {
     .get(toRequestHandler(authentication(appCtx)), toRequestHandler(getLoansHandler(appCtx)))
     .post(toRequestHandler(authentication(appCtx)), toRequestHandler(createLoanHandler(appCtx)));
 
+  loanRouter.route("/overdue")
+    .get(toRequestHandler(authentication(appCtx)), toRequestHandler(getOverdueLoansHandler(appCtx)))
+
+  loanRouter.route("/overdue/reminders")
+    .post(toRequestHandler(authentication(appCtx)), toRequestHandler(sendOverdueRemindersHandler(appCtx)))
+
   loanRouter.route("/:userId")
     .get(toRequestHandler(authentication(appCtx)), toRequestHandler(getLoansByUserIdHandler(appCtx)))
+
+  loanRouter.route("/:loanId/extend")
+    .put(toRequestHandler(authentication(appCtx)), toRequestHandler(extendLoanHandler(appCtx)))
 
   loanRouter.route("/:loanId")
     .put(toRequestHandler(authentication(appCtx)), toRequestHandler(updateLoanHandler(appCtx)))

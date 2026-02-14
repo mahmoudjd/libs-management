@@ -1,9 +1,11 @@
-import type { ObjectId } from "mongodb"
 import { Response } from "express"
+import type { ObjectId } from "mongodb"
 
 import type { AppContext } from "../context/app-ctx"
-import type { AuthenticatedRequest } from "../types/http"
+import { writeAuditLog } from "../audit/audit-log"
+import { isStaff } from "../lib/authorization"
 import { parseObjectId } from "../lib/object-id"
+import type { AuthenticatedRequest } from "../types/http"
 
 /**
  * Delete a book by ID
@@ -12,8 +14,8 @@ import { parseObjectId } from "../lib/object-id"
 export const deleteBookHandler = (appCtx: AppContext) => async (req: AuthenticatedRequest, res: Response) => {
   const { bookId } = req.params
 
-  if (!req.user || req.user.role !== "admin") {
-    return res.status(403).json({ error: "Only admins can delete books" })
+  if (!isStaff(req.user)) {
+    return res.status(403).json({ error: "Only staff can delete books" })
   }
 
   const parsedBookId = parseObjectId(bookId)
@@ -22,11 +24,42 @@ export const deleteBookHandler = (appCtx: AppContext) => async (req: Authenticat
   }
 
   try {
+    const activeLoanCount = await appCtx.dbCtx.loans.countDocuments({
+      bookId: parsedBookId,
+      returnedAt: null,
+    })
+
+    if (activeLoanCount > 0) {
+      return res.status(409).json({
+        error: "Book has active loans and cannot be deleted",
+      })
+    }
+
     const deleted = await deleteBook(appCtx, parsedBookId)
 
     if (!deleted) {
       return res.status(404).json({ error: "Book not found" })
     }
+
+    await appCtx.dbCtx.reservations.updateMany(
+      {
+        bookId: parsedBookId,
+        status: "pending",
+      },
+      {
+        $set: {
+          status: "cancelled",
+          cancelledAt: new Date(),
+        },
+      }
+    )
+
+    await writeAuditLog(appCtx, {
+      action: "book.deleted",
+      entityType: "book",
+      entityId: parsedBookId.toHexString(),
+      actor: req.user,
+    })
 
     return res.status(200).json({ message: "Book deleted successfully" })
   } catch (error) {

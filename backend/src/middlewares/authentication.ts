@@ -5,13 +5,14 @@ import { ObjectId } from "mongodb"
 import { extractAccessTokenFromRequest } from "../api/lib/extract-access-token-from-request"
 import type { AppContext } from "../context/app-ctx"
 import type { AuthenticatedRequest, AuthenticatedUser } from "../types/http"
+import type { UserRole } from "../types/types"
 
 interface AccessTokenPayload {
   userId: string
   firstName: string
   lastName: string
   email: string
-  role: "admin" | "user"
+  role: UserRole
 }
 
 function isAccessTokenPayload(value: unknown): value is AccessTokenPayload {
@@ -25,7 +26,7 @@ function isAccessTokenPayload(value: unknown): value is AccessTokenPayload {
     typeof payload.firstName === "string" &&
     typeof payload.lastName === "string" &&
     typeof payload.email === "string" &&
-    (payload.role === "admin" || payload.role === "user")
+    (payload.role === "admin" || payload.role === "librarian" || payload.role === "user")
   )
 }
 
@@ -58,7 +59,9 @@ export const authentication =
           return res.status(401).json({ error: "Invalid token: user not found" })
         }
 
-        const role: AuthenticatedUser["role"] = user.role === "admin" ? "admin" : "user"
+        const role: AuthenticatedUser["role"] = user.role === "admin" || user.role === "librarian"
+          ? user.role
+          : "user"
         req.user = {
           id: user._id.toHexString(),
           firstName: user.firstName,
