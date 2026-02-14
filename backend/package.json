@@ -7,7 +7,7 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js --external:express --external:cors",
+    "build": "tsup src/index.ts --format cjs --platform node --out-dir dist --external express --external cors",
     "start": "node dist/index.js"
   },
   "devDependencies": {
