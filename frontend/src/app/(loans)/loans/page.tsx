@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react"
 import { useSession } from "next-auth/react"
 
 import LoanList from "@/components/LoanList"
+import { LoanStatusPieChart } from "@/components/loans/loan-status-pie-chart"
 import { PageLayout } from "@/components/page-layout"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -109,6 +110,16 @@ export default function LoansPage() {
                         )}
                     </div>
                 )}
+            </div>
+
+            <div className="mb-6">
+                <LoanStatusPieChart
+                    title="Loan Status Distribution"
+                    subtitle={isStaff ? "All loans in the system" : "Your loans"}
+                    active={counts.active}
+                    overdue={counts.overdue}
+                    returned={counts.returned}
+                />
             </div>
 
             {(booksLoading || loansLoading) ? (
