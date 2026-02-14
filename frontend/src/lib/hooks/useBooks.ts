@@ -1,37 +1,116 @@
+import { useMemo } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { apiClient } from "@/lib/apiClient"
 import type { ApiMessageResponse, Book, BookFormData } from "@/lib/types"
 
-const BOOKS_QUERY_KEY = ["books"] as const
+type SortBy = "title" | "author" | "genre" | "createdAt" | "availableCopies" | "totalCopies"
+type SortOrder = "asc" | "desc"
 
-export const useBooks = () => {
+export interface BooksQueryParams {
+    q?: string
+    genre?: string
+    availableOnly?: boolean
+    paginated?: boolean
+    page?: number
+    pageSize?: number
+    sortBy?: SortBy
+    order?: SortOrder
+}
+
+interface PaginatedBooksResponse {
+    items: Book[]
+    total: number
+    page: number
+    pageSize: number
+}
+
+const BOOKS_QUERY_ROOT = ["books"] as const
+
+function normalizeParams(params?: BooksQueryParams) {
+    return {
+        q: params?.q?.trim() || undefined,
+        genre: params?.genre?.trim() || undefined,
+        availableOnly: params?.availableOnly || false,
+        paginated: params?.paginated || false,
+        page: params?.page || 1,
+        pageSize: params?.pageSize || 12,
+        sortBy: params?.sortBy || "createdAt",
+        order: params?.order || "desc",
+    } as const
+}
+
+function toApiParams(params: ReturnType<typeof normalizeParams>) {
+    return {
+        ...(params.q ? { q: params.q } : {}),
+        ...(params.genre ? { genre: params.genre } : {}),
+        ...(params.availableOnly ? { availableOnly: "true" } : {}),
+        ...(params.paginated ? {
+            paginated: "true",
+            page: String(params.page),
+            pageSize: String(params.pageSize),
+            sortBy: params.sortBy,
+            order: params.order,
+        } : {}),
+    }
+}
+
+export const useBooks = (params?: BooksQueryParams) => {
     const queryClient = useQueryClient()
+    const normalizedParams = useMemo(() => normalizeParams(params), [params])
 
-    const { data: books = [], isLoading, error } = useQuery<Book[]>({
-        queryKey: BOOKS_QUERY_KEY,
+    const queryKey = useMemo(() => ([...BOOKS_QUERY_ROOT, normalizedParams] as const), [normalizedParams])
+
+    const { data, isLoading, error } = useQuery<Book[] | PaginatedBooksResponse>({
+        queryKey,
         queryFn: async () => {
-            const response = await apiClient.get<Book[]>("/books")
+            if (normalizedParams.paginated) {
+                const response = await apiClient.get<PaginatedBooksResponse>("/books", {
+                    params: toApiParams(normalizedParams),
+                })
+                return response.data
+            }
+
+            const response = await apiClient.get<Book[]>("/books", {
+                params: toApiParams(normalizedParams),
+            })
             return response.data
         },
         staleTime: 60_000,
     })
+
+    const books = useMemo(() => {
+        if (!data) {
+            return []
+        }
+
+        if (Array.isArray(data)) {
+            return data
+        }
+
+        return data.items
+    }, [data])
+
+    const pagination = useMemo(() => {
+        if (!data || Array.isArray(data)) {
+            return null
+        }
+
+        return {
+            page: data.page,
+            pageSize: data.pageSize,
+            total: data.total,
+            totalPages: Math.max(1, Math.ceil(data.total / data.pageSize)),
+        }
+    }, [data])
 
     const addBookMutation = useMutation({
         mutationFn: async (newBook: BookFormData) => {
             const response = await apiClient.post<Book>("/books", newBook)
             return response.data
         },
-        onSuccess: (createdBook) => {
-            queryClient.setQueryData<Book[]>(BOOKS_QUERY_KEY, (current) => {
-                if (!current) {
-                    return [createdBook]
-                }
-                return [createdBook, ...current]
-            })
-        },
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: BOOKS_QUERY_KEY })
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: BOOKS_QUERY_ROOT })
         },
     })
 
@@ -40,34 +119,8 @@ export const useBooks = () => {
             const response = await apiClient.put<ApiMessageResponse>(`/books/${id}`, data)
             return response.data
         },
-        onMutate: async ({ id, data }) => {
-            await queryClient.cancelQueries({ queryKey: BOOKS_QUERY_KEY })
-            const previousBooks = queryClient.getQueryData<Book[]>(BOOKS_QUERY_KEY)
-
-            queryClient.setQueryData<Book[]>(BOOKS_QUERY_KEY, (current) => {
-                if (!current) {
-                    return current
-                }
-
-                return current.map((book) => (
-                    book._id === id
-                        ? {
-                            ...book,
-                            ...data,
-                        }
-                        : book
-                ))
-            })
-
-            return { previousBooks }
-        },
-        onError: (_error, _variables, context) => {
-            if (context?.previousBooks) {
-                queryClient.setQueryData(BOOKS_QUERY_KEY, context.previousBooks)
-            }
-        },
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: BOOKS_QUERY_KEY })
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: BOOKS_QUERY_ROOT })
         },
     })
 
@@ -75,34 +128,14 @@ export const useBooks = () => {
         mutationFn: async (id: string) => {
             await apiClient.delete(`/books/${id}`)
         },
-        onMutate: async (id) => {
-            await queryClient.cancelQueries({ queryKey: BOOKS_QUERY_KEY })
-            const previousBooks = queryClient.getQueryData<Book[]>(BOOKS_QUERY_KEY)
-
-            queryClient.setQueryData<Book[]>(BOOKS_QUERY_KEY, (current) => {
-                if (!current) {
-                    return current
-                }
-                return current.filter((book) => book._id !== id)
-            })
-
-            return { previousBooks }
-        },
-        onError: (_error, _id, context) => {
-            if (context?.previousBooks) {
-                queryClient.setQueryData(BOOKS_QUERY_KEY, context.previousBooks)
-            }
-        },
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: BOOKS_QUERY_KEY })
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: BOOKS_QUERY_ROOT })
         },
     })
 
-    const deletingBookId = deleteBookMutation.isPending ? deleteBookMutation.variables : undefined
-    const editingBookId = editBookMutation.isPending ? editBookMutation.variables?.id : undefined
-
     return {
         books,
+        pagination,
         isLoading,
         error,
         addBook: addBookMutation.mutateAsync,
@@ -110,8 +143,8 @@ export const useBooks = () => {
         deleteBook: deleteBookMutation.mutateAsync,
         isAddingBook: addBookMutation.isPending,
         isDeletingBook: deleteBookMutation.isPending,
-        deletingBookId,
+        deletingBookId: deleteBookMutation.isPending ? deleteBookMutation.variables : undefined,
         isEditingBook: editBookMutation.isPending,
-        editingBookId,
+        editingBookId: editBookMutation.isPending ? editBookMutation.variables?.id : undefined,
     }
 }

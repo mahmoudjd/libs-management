@@ -6,14 +6,17 @@ import { apiClient } from "@/lib/apiClient"
 import type { ApiMessageResponse, Book, Loan } from "@/lib/types"
 
 const ALL_LOANS_QUERY_KEY = ["loans", "all"] as const
+const OVERDUE_LOANS_QUERY_KEY = ["loans", "overdue"] as const
 const userLoansQueryKey = (userId: string | undefined) => ["loans", "user", userId] as const
 const BOOKS_QUERY_KEY = ["books"] as const
 
 export const useLoans = (books: Book[]) => {
     const { data: session } = useSession()
     const queryClient = useQueryClient()
+
     const userId = session?.user?.id
-    const isAdmin = session?.user?.salesRole === "admin"
+    const role = session?.user?.salesRole
+    const isStaff = role === "admin" || role === "librarian"
 
     const booksById = useMemo(() => {
         return new Map(books.map((book) => [book._id, book]))
@@ -21,7 +24,7 @@ export const useLoans = (books: Book[]) => {
 
     const { data: allLoansRaw = [] } = useQuery<Loan[]>({
         queryKey: ALL_LOANS_QUERY_KEY,
-        enabled: isAdmin,
+        enabled: isStaff,
         queryFn: async () => {
             const response = await apiClient.get<Loan[]>("/loans")
             return response.data
@@ -38,6 +41,16 @@ export const useLoans = (books: Book[]) => {
         enabled: Boolean(userId),
         queryFn: async () => {
             const response = await apiClient.get<Loan[]>(`/loans/${userId}`)
+            return response.data
+        },
+        staleTime: 30_000,
+    })
+
+    const { data: overdueLoans = [] } = useQuery<Loan[]>({
+        queryKey: OVERDUE_LOANS_QUERY_KEY,
+        enabled: isStaff,
+        queryFn: async () => {
+            const response = await apiClient.get<Loan[]>("/loans/overdue")
             return response.data
         },
         staleTime: 30_000,
@@ -66,94 +79,11 @@ export const useLoans = (books: Book[]) => {
             const response = await apiClient.post<Loan>("/loans", {
                 bookId: data.bookId,
                 userId,
-                loanDate: new Date().toISOString(),
                 returnDate: data.returnDate.toISOString(),
             })
             return response.data
         },
-        onMutate: async ({ bookId, returnDate }) => {
-            if (!userId) {
-                return undefined
-            }
-
-            await Promise.all([
-                queryClient.cancelQueries({ queryKey: BOOKS_QUERY_KEY }),
-                queryClient.cancelQueries({ queryKey: userLoansQueryKey(userId) }),
-                queryClient.cancelQueries({ queryKey: ALL_LOANS_QUERY_KEY }),
-            ])
-
-            const previousBooks = queryClient.getQueryData<Book[]>(BOOKS_QUERY_KEY)
-            const previousUserLoans = queryClient.getQueryData<Loan[]>(userLoansQueryKey(userId))
-            const previousAllLoans = queryClient.getQueryData<Loan[]>(ALL_LOANS_QUERY_KEY)
-
-            const targetBook = previousBooks?.find((book) => book._id === bookId)
-            const nowIso = new Date().toISOString()
-            const optimisticLoan: Loan = {
-                _id: `tmp-${bookId}-${Date.now()}`,
-                bookId,
-                userId,
-                loanDate: nowIso,
-                returnDate: returnDate.toISOString(),
-                book: targetBook,
-                user: {
-                    id: userId,
-                    name: session?.user?.name,
-                    firstName: session?.user?.firstName,
-                    lastName: session?.user?.lastName,
-                    email: session?.user?.email,
-                    role: session?.user?.salesRole === "admin" ? "admin" : "user",
-                    accessToken: session?.user?.accessToken,
-                },
-            }
-
-            queryClient.setQueryData<Book[]>(BOOKS_QUERY_KEY, (current) => {
-                if (!current) {
-                    return current
-                }
-                return current.map((book) => (
-                    book._id === bookId
-                        ? {
-                            ...book,
-                            available: false,
-                        }
-                        : book
-                ))
-            })
-
-            queryClient.setQueryData<Loan[]>(userLoansQueryKey(userId), (current) => {
-                if (!current) {
-                    return [optimisticLoan]
-                }
-                return [optimisticLoan, ...current]
-            })
-
-            if (isAdmin) {
-                queryClient.setQueryData<Loan[]>(ALL_LOANS_QUERY_KEY, (current) => {
-                    if (!current) {
-                        return [optimisticLoan]
-                    }
-                    return [optimisticLoan, ...current]
-                })
-            }
-
-            return { previousBooks, previousUserLoans, previousAllLoans }
-        },
-        onError: (_error, _variables, context) => {
-            if (!userId || !context) {
-                return
-            }
-
-            if (context.previousBooks) {
-                queryClient.setQueryData(BOOKS_QUERY_KEY, context.previousBooks)
-            }
-            if (context.previousUserLoans) {
-                queryClient.setQueryData(userLoansQueryKey(userId), context.previousUserLoans)
-            }
-            if (context.previousAllLoans) {
-                queryClient.setQueryData(ALL_LOANS_QUERY_KEY, context.previousAllLoans)
-            }
-        },
-        onSettled: () => {
+        onSuccess: () => {
             if (userId) {
                 queryClient.invalidateQueries({ queryKey: userLoansQueryKey(userId) })
             }
@@ -164,109 +94,49 @@ export const useLoans = (books: Book[]) => {
 
     const returnBookMutation = useMutation({
         mutationFn: async ({ loanId }: { loanId: string }) => {
-            const response = await apiClient.put<ApiMessageResponse>(`/loans/${loanId}`, {
-                returnDate: new Date().toISOString(),
-            })
+            const response = await apiClient.put<ApiMessageResponse>(`/loans/${loanId}`, {})
             return response.data
         },
-        onMutate: async ({ loanId }) => {
-            if (!userId) {
-                return undefined
-            }
-
-            await Promise.all([
-                queryClient.cancelQueries({ queryKey: BOOKS_QUERY_KEY }),
-                queryClient.cancelQueries({ queryKey: userLoansQueryKey(userId) }),
-                queryClient.cancelQueries({ queryKey: ALL_LOANS_QUERY_KEY }),
-            ])
-
-            const previousBooks = queryClient.getQueryData<Book[]>(BOOKS_QUERY_KEY)
-            const previousUserLoans = queryClient.getQueryData<Loan[]>(userLoansQueryKey(userId))
-            const previousAllLoans = queryClient.getQueryData<Loan[]>(ALL_LOANS_QUERY_KEY)
-            const nowIso = new Date().toISOString()
-
-            const targetLoan = previousUserLoans?.find((loan) => loan._id === loanId)
-                || previousAllLoans?.find((loan) => loan._id === loanId)
-
-            queryClient.setQueryData<Loan[]>(userLoansQueryKey(userId), (current) => {
-                if (!current) {
-                    return current
-                }
-
-                return current.map((loan) => (
-                    loan._id === loanId
-                        ? {
-                            ...loan,
-                            returnDate: nowIso,
-                        }
-                        : loan
-                ))
-            })
-
-            queryClient.setQueryData<Loan[]>(ALL_LOANS_QUERY_KEY, (current) => {
-                if (!current) {
-                    return current
-                }
-
-                return current.map((loan) => (
-                    loan._id === loanId
-                        ? {
-                            ...loan,
-                            returnDate: nowIso,
-                        }
-                        : loan
-                ))
-            })
-
-            if (targetLoan?.bookId) {
-                queryClient.setQueryData<Book[]>(BOOKS_QUERY_KEY, (current) => {
-                    if (!current) {
-                        return current
-                    }
-
-                    return current.map((book) => (
-                        book._id === targetLoan.bookId
-                            ? {
-                                ...book,
-                                available: true,
-                            }
-                            : book
-                    ))
-                })
-            }
-
-            return { previousBooks, previousUserLoans, previousAllLoans }
-        },
-        onError: (_error, _variables, context) => {
-            if (!userId || !context) {
-                return
-            }
-
-            if (context.previousBooks) {
-                queryClient.setQueryData(BOOKS_QUERY_KEY, context.previousBooks)
-            }
-            if (context.previousUserLoans) {
-                queryClient.setQueryData(userLoansQueryKey(userId), context.previousUserLoans)
-            }
-            if (context.previousAllLoans) {
-                queryClient.setQueryData(ALL_LOANS_QUERY_KEY, context.previousAllLoans)
-            }
-        },
-        onSettled: () => {
+        onSuccess: () => {
             if (userId) {
                 queryClient.invalidateQueries({ queryKey: userLoansQueryKey(userId) })
             }
             queryClient.invalidateQueries({ queryKey: ALL_LOANS_QUERY_KEY })
+            queryClient.invalidateQueries({ queryKey: OVERDUE_LOANS_QUERY_KEY })
             queryClient.invalidateQueries({ queryKey: BOOKS_QUERY_KEY })
         },
     })
 
-    const borrowingBookId = borrowBookMutation.isPending ? borrowBookMutation.variables?.bookId : undefined
-    const returningLoanId = returnBookMutation.isPending ? returnBookMutation.variables?.loanId : undefined
+    const extendLoanMutation = useMutation({
+        mutationFn: async ({ loanId, days }: { loanId: string; days?: number }) => {
+            const response = await apiClient.put<ApiMessageResponse>(`/loans/${loanId}/extend`, {
+                days,
+            })
+            return response.data
+        },
+        onSuccess: () => {
+            if (userId) {
+                queryClient.invalidateQueries({ queryKey: userLoansQueryKey(userId) })
+            }
+            queryClient.invalidateQueries({ queryKey: ALL_LOANS_QUERY_KEY })
+            queryClient.invalidateQueries({ queryKey: OVERDUE_LOANS_QUERY_KEY })
+        },
+    })
+
+    const prepareOverdueRemindersMutation = useMutation({
+        mutationFn: async () => {
+            const response = await apiClient.post<{ message: string; count: number }>("/loans/overdue/reminders")
+            return response.data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: OVERDUE_LOANS_QUERY_KEY })
+        },
+    })
 
     return {
         allLoans,
         userLoans,
+        overdueLoans,
         isLoading,
         error,
         borrowBook: async (bookId: string, returnDate: Date) => {
@@ -275,9 +145,18 @@ export const useLoans = (books: Book[]) => {
         returnBook: async (loanId: string) => {
             await returnBookMutation.mutateAsync({ loanId })
         },
+        extendLoan: async (loanId: string, days?: number) => {
+            await extendLoanMutation.mutateAsync({ loanId, days })
+        },
+        prepareOverdueReminders: async () => {
+            return prepareOverdueRemindersMutation.mutateAsync()
+        },
         isBorrowingBook: borrowBookMutation.isPending,
-        borrowingBookId,
+        borrowingBookId: borrowBookMutation.isPending ? borrowBookMutation.variables?.bookId : undefined,
         isReturningBook: returnBookMutation.isPending,
-        returningLoanId,
+        returningLoanId: returnBookMutation.isPending ? returnBookMutation.variables?.loanId : undefined,
+        isExtendingLoan: extendLoanMutation.isPending,
+        extendingLoanId: extendLoanMutation.isPending ? extendLoanMutation.variables?.loanId : undefined,
+        isPreparingOverdueReminders: prepareOverdueRemindersMutation.isPending,
     }
 }

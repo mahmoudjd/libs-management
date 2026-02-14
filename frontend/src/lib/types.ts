@@ -3,7 +3,11 @@ export type Book = {
   title: string;
   author: string;
   genre: string;
+  totalCopies: number;
+  availableCopies: number;
   available: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 
@@ -11,7 +15,9 @@ export type BookFormData = {
   title: string;
   author: string;
   genre: string;
-  available: boolean;
+  totalCopies?: number;
+  availableCopies?: number;
+  available?: boolean;
 };
 
 export type ApiMessageResponse = {
@@ -24,7 +30,7 @@ export type User = {
   firstName?: string;
   lastName?: string;
   email?: string;
-  role?: 'user' | 'admin';
+  role?: "user" | "librarian" | "admin";
   accessToken?: string;
 };
 
@@ -34,8 +40,13 @@ export type Loan = {
   userId: string;
   loanDate: string;
   returnDate: string;
-  book?: Book;
-  user?: User;
+  returnedAt: string | null;
+  extensionCount: number;
+  source: "direct" | "reservation";
+  status: "active" | "overdue" | "returned";
+  overdue: boolean;
+  book?: Book | null;
+  user?: User | null;
 };
 
 export type AuthUser = {
@@ -43,10 +54,53 @@ export type AuthUser = {
   email: string;
   firstName: string;
   lastName: string;
-  role: "admin" | "user";
+  role: "admin" | "librarian" | "user";
   accessToken: string;
 };
 
 export type AuthResponse = ApiMessageResponse & {
   user: AuthUser;
+};
+
+export type Reservation = {
+  _id: string;
+  bookId: string;
+  userId: string;
+  createdAt: string;
+  status: "pending" | "fulfilled" | "cancelled";
+  fulfilledAt: string | null;
+  cancelledAt: string | null;
+  book?: Book | null;
+  user?: User | null;
+};
+
+export type DashboardKpis =
+  | {
+      role: "admin" | "librarian";
+      totalBooks: number;
+      availableBooks: number;
+      totalUsers: number;
+      activeLoans: number;
+      overdueLoans: number;
+      pendingReservations: number;
+      topGenres: Array<{ genre: string; count: number }>;
+    }
+  | {
+      role: "user";
+      totalBooks: number;
+      availableBooks: number;
+      myActiveLoans: number;
+      myOverdueLoans: number;
+      myPendingReservations: number;
+    };
+
+export type AuditLog = {
+  _id: string;
+  actorUserId: string | null;
+  actorRole?: "admin" | "librarian" | "user";
+  action: string;
+  entityType: string;
+  entityId: string | null;
+  details: Record<string, unknown>;
+  createdAt: string;
 };
