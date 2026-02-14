@@ -93,7 +93,7 @@ function TrendSection({
   trends: ReturnType<typeof useDashboardLoanTrends>["data"]
 }) {
   return (
-    <section className="mt-8 rounded-2xl bg-gradient-to-br from-slate-100/70 to-white p-4 md:p-5">
+    <section className="mt-8 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
@@ -215,7 +215,7 @@ export default function Dashboard() {
 
         <TrendSection
           title="All Loans Trend"
-          subtitle="Bar chart for loaned/returned, with lines for open/overdue trends."
+          subtitle="Simple chart: blue = loaned, green = returned."
           selectedRange={selectedTrendRange}
           onSelectRange={setSelectedTrendRange}
           isLoading={isLoanTrendsLoading}
@@ -245,7 +245,7 @@ export default function Dashboard() {
 
       <TrendSection
         title="My Loans Trend"
-        subtitle="Track your monthly or daily loan activity and due-risk trend."
+        subtitle="Simple chart: blue = loaned, green = returned."
         selectedRange={selectedTrendRange}
         onSelectRange={setSelectedTrendRange}
         isLoading={isLoanTrendsLoading}
