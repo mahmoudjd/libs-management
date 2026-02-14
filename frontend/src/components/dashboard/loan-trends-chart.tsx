@@ -197,7 +197,7 @@ export const LoanTrendsChart: React.FC<LoanTrendsChartProps> = ({ trends }) => {
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 4 }}
-              isAnimationActive={false}
+              isAnimationActive
             />
             <Area
               type="monotone"
@@ -208,7 +208,7 @@ export const LoanTrendsChart: React.FC<LoanTrendsChartProps> = ({ trends }) => {
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 4 }}
-              isAnimationActive={false}
+              isAnimationActive
             />
             <Area
               type="monotone"
@@ -219,7 +219,7 @@ export const LoanTrendsChart: React.FC<LoanTrendsChartProps> = ({ trends }) => {
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 4 }}
-              isAnimationActive={false}
+              isAnimationActive
             />
             <Area
               type="monotone"
@@ -230,7 +230,7 @@ export const LoanTrendsChart: React.FC<LoanTrendsChartProps> = ({ trends }) => {
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 4 }}
-              isAnimationActive={false}
+              isAnimationActive
             />
           </AreaChart>
         </ResponsiveContainer>
