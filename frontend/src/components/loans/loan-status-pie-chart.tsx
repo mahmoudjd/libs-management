@@ -88,7 +88,7 @@ export const LoanStatusPieChart: React.FC<LoanStatusPieChartProps> = ({
                   innerRadius={56}
                   outerRadius={92}
                   paddingAngle={2}
-                  isAnimationActive={false}
+                  isAnimationActive
                 >
                   {chartData.map((entry) => (
                     <Cell key={entry.key} fill={entry.color} />
