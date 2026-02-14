@@ -5,11 +5,12 @@ import {GridList} from "@/components/ui/grid-list";
 
 type LoanListProps = {
     loans: Loan[];
-    onReturn: (loanId: string, bookId: string) => void;
+    onReturn: (loanId: string) => void;
     isLoggedIn: boolean;
+    returningLoanId?: string;
 };
 
-const LoanList: React.FC<LoanListProps> = ({loans, onReturn, isLoggedIn}) => {
+const LoanList: React.FC<LoanListProps> = ({loans, onReturn, isLoggedIn, returningLoanId}) => {
     if (!isLoggedIn) {
         return <p className="text-center text-gray-500">Please log in to view your loans.</p>;
     }
@@ -21,7 +22,12 @@ const LoanList: React.FC<LoanListProps> = ({loans, onReturn, isLoggedIn}) => {
     return (
         <GridList>
             {loans.map((loan) => (
-                <LoanCard key={loan._id} loan={loan} onReturn={onReturn}/>
+                <LoanCard
+                    key={loan._id}
+                    loan={loan}
+                    onReturn={onReturn}
+                    isReturning={returningLoanId === loan._id}
+                />
             ))}
         </GridList>
     );

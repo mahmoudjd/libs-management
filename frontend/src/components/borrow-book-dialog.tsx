@@ -7,17 +7,18 @@ import * as Dialog from "@radix-ui/react-dialog";
 interface BorrowBookDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSubmit: (bookId: string, returnDate: Date) => void;
+    onSubmit: (bookId: string, returnDate: Date) => Promise<void>;
     book: Book | null;
+    isSubmitting?: boolean;
 }
 
-const BorrowBookDialog: React.FC<BorrowBookDialogProps> = ({ open, onOpenChange, onSubmit, book }) => {
+const BorrowBookDialog: React.FC<BorrowBookDialogProps> = ({ open, onOpenChange, onSubmit, book, isSubmitting = false }) => {
     const [returnDate, setReturnDate] = useState<string>('');  // Store returnDate as string
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (book && returnDate) {
             const returnDateObj = new Date(returnDate); // Convert the returnDate to a Date object
-            onSubmit(book._id, returnDateObj);  // Submit bookId and returnDate
+            await onSubmit(book._id, returnDateObj);  // Submit bookId and returnDate
             onOpenChange(false);
         }
     };
@@ -55,13 +56,15 @@ const BorrowBookDialog: React.FC<BorrowBookDialogProps> = ({ open, onOpenChange,
                                 <Button
                                     onClick={handleSubmit}
                                     className="w-full bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none py-3 rounded-lg transition duration-300 ease-in-out"
+                                    disabled={isSubmitting || !returnDate}
                                 >
-                                    Borrow
+                                    {isSubmitting ? "Borrowing..." : "Borrow"}
                                 </Button>
                                 <Button
                                     variant="outline"
                                     onClick={() => onOpenChange(false)}
                                     className="w-full border-gray-300 text-gray-700 hover:bg-gray-100 focus:outline-none py-3 rounded-lg transition duration-300 ease-in-out"
+                                    disabled={isSubmitting}
                                 >
                                     Cancel
                                 </Button>

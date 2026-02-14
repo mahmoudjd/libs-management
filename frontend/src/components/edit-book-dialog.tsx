@@ -7,11 +7,12 @@ import * as Dialog from "@radix-ui/react-dialog";
 interface EditBookDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSubmit: (data: BookFormData) => void;
+    onSubmit: (data: BookFormData) => Promise<void>;
     book: Book | null;
+    isSubmitting?: boolean;
 }
 
-const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onOpenChange, onSubmit, book }) => {
+const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onOpenChange, onSubmit, book, isSubmitting = false }) => {
     const [title, setTitle] = useState(book?.title || '');
     const [author, setAuthor] = useState(book?.author || '');
     const [genre, setGenre] = useState(book?.genre || '');
@@ -27,9 +28,9 @@ const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onOpenChange, onS
         }
     }, [book]);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (book) {
-            onSubmit({
+            await onSubmit({
                 ...book,
                 title,
                 author,
@@ -58,6 +59,7 @@ const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onOpenChange, onS
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder="Enter book title"
                             className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={isSubmitting}
                         />
                     </div>
 
@@ -70,6 +72,7 @@ const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onOpenChange, onS
                             onChange={(e) => setAuthor(e.target.value)}
                             placeholder="Enter author's name"
                             className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={isSubmitting}
                         />
                     </div>
 
@@ -82,6 +85,7 @@ const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onOpenChange, onS
                             onChange={(e) => setGenre(e.target.value)}
                             placeholder="Enter genre"
                             className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={isSubmitting}
                         />
                     </div>
 
@@ -92,6 +96,7 @@ const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onOpenChange, onS
                             checked={available}
                             onChange={(e) => setAvailable(e.target.checked)}
                             className="mr-2 rounded-md border-gray-300 text-blue-500 focus:ring-2 focus:ring-blue-500"
+                            disabled={isSubmitting}
                         />
                         <label htmlFor="available" className="text-sm font-medium">Available for Borrowing</label>
                     </div>
@@ -100,13 +105,15 @@ const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onOpenChange, onS
                         <Button
                             onClick={handleSubmit}
                             className="w-full bg-blue-500 text-white hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:outline-none py-3 rounded-md"
+                            disabled={isSubmitting}
                         >
-                            Save Changes
+                            {isSubmitting ? "Saving..." : "Save Changes"}
                         </Button>
                         <Button
                             variant="outline"
                             onClick={() => onOpenChange(false)}
                             className="w-full py-3 rounded-md text-gray-700"
+                            disabled={isSubmitting}
                         >
                             Cancel
                         </Button>

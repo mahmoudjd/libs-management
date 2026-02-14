@@ -9,6 +9,7 @@ type DeleteBookDialogProps = {
   onDelete: (bookId: string) => Promise<void>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  isDeleting?: boolean;
 };
 
 const DeleteBookDialog: React.FC<DeleteBookDialogProps> = ({
@@ -16,6 +17,7 @@ const DeleteBookDialog: React.FC<DeleteBookDialogProps> = ({
   onDelete,
   open,
   onOpenChange,
+  isDeleting = false,
 }) => {
   const handleDelete = async () => {
     if (book) {
@@ -39,6 +41,7 @@ const DeleteBookDialog: React.FC<DeleteBookDialogProps> = ({
               type="button"
               className="mr-2 px-4 py-2 border border-gray-300 rounded-md text-gray-700"
               onClick={() => onOpenChange(false)}
+              disabled={isDeleting}
             >
               Cancel
             </Button>
@@ -46,8 +49,9 @@ const DeleteBookDialog: React.FC<DeleteBookDialogProps> = ({
               type="button"
               className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md"
               onClick={handleDelete}
+              disabled={isDeleting}
             >
-              Delete
+              {isDeleting ? "Deleting..." : "Delete"}
             </Button>
           </div>
         </Dialog.Content>

@@ -12,6 +12,9 @@ type BookCardProps = {
     onEdit: (book: Book) => void;
     onDelete: (book: Book) => void;
     userLoggedIn: boolean;
+    isBorrowing?: boolean;
+    isEditing?: boolean;
+    isDeleting?: boolean;
 };
 
 const BookCard: React.FC<BookCardProps> = ({
@@ -21,6 +24,9 @@ const BookCard: React.FC<BookCardProps> = ({
                                                onEdit,
                                                onDelete,
                                                userLoggedIn,
+                                               isBorrowing = false,
+                                               isEditing = false,
+                                               isDeleting = false,
                                            }) => {
     return (
         <Card className="flex flex-col justify-between h-full hover:shadow-md transition-shadow">
@@ -45,6 +51,7 @@ const BookCard: React.FC<BookCardProps> = ({
                                     className="w-9 h-9 p-0 rounded-full bg-yellow-100 hover:bg-yellow-200 border-none"
                                     title="Edit Book"
                                     onClick={() => onEdit(book)}
+                                    disabled={isEditing || isDeleting}
                                 >
                                     <PencilIcon className="h-5 w-5 text-yellow-700"/>
                                 </Button>
@@ -54,6 +61,7 @@ const BookCard: React.FC<BookCardProps> = ({
                                     className="w-9 h-9 p-0 rounded-full bg-red-100 hover:bg-red-200 border-none"
                                     title="Delete Book"
                                     onClick={() => onDelete(book)}
+                                    disabled={isDeleting || isEditing}
                                 >
                                     <TrashIcon className="h-5 w-5 text-red-700"/>
                                 </Button>
@@ -65,8 +73,9 @@ const BookCard: React.FC<BookCardProps> = ({
                                 variant="default"
                                 className="text-xs font-semibold rounded-full"
                                 onClick={() => onBorrow(book._id)}
+                                disabled={isBorrowing}
                             >
-                                Borrow
+                                {isBorrowing ? "Borrowing..." : "Borrow"}
                             </Button>
                         )}
                     </div>

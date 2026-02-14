@@ -10,6 +10,9 @@ type BookListProps = {
     onEdit: (book: Book) => void;
     onDelete: (book: Book) => void;
     userLoggedIn: boolean;
+    borrowingBookId?: string;
+    deletingBookId?: string;
+    editingBookId?: string;
 };
 
 export const BookList: React.FC<BookListProps> = ({
@@ -19,6 +22,9 @@ export const BookList: React.FC<BookListProps> = ({
                                                       onEdit,
                                                       onDelete,
                                                       userLoggedIn,
+                                                      borrowingBookId,
+                                                      deletingBookId,
+                                                      editingBookId,
                                                   }) => {
     if (books.length === 0) {
         return <p className="col-span-3 text-center text-gray-500">No books found matching your search.</p>;
@@ -35,6 +41,9 @@ export const BookList: React.FC<BookListProps> = ({
                     onEdit={onEdit}
                     onDelete={onDelete}
                     userLoggedIn={userLoggedIn}
+                    isBorrowing={borrowingBookId === book._id}
+                    isDeleting={deletingBookId === book._id}
+                    isEditing={editingBookId === book._id}
                 />
             ))}
         </GridList>

@@ -1,5 +1,7 @@
-import { env } from "@/env"
 import axios from "axios"
+import { CLIENT_API_BASE_URL } from "@/lib/api-base-url.client"
+import { getApiErrorMessage } from "@/lib/api-error"
+import type { ApiMessageResponse } from "@/lib/types"
 
 export async function signupUser({ 
   email, 
@@ -13,7 +15,7 @@ export async function signupUser({
   lastName: string;
 }) {
   try {
-    const response = await axios.post(`${env.NEXT_PUBLIC_API_HOST_CLIENT}/auth/signup`, {
+    const response = await axios.post<ApiMessageResponse>(`${CLIENT_API_BASE_URL}/auth/signup`, {
       email,
       password,
       firstName,
@@ -21,7 +23,7 @@ export async function signupUser({
     });
     return response.data;
   } catch (error) {
-    console.error("Signup failed:", error);
+    console.error("Signup failed:", getApiErrorMessage(error, "Signup failed"));
     return null;
   }
 }

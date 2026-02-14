@@ -8,9 +8,10 @@ type AddBookFormProps = {
     onSubmit: (bookData: BookFormData) => Promise<void>;
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    isSubmitting?: boolean;
 };
 
-const AddBookForm: React.FC<AddBookFormProps> = ({onSubmit, open, onOpenChange}) => {
+const AddBookForm: React.FC<AddBookFormProps> = ({onSubmit, open, onOpenChange, isSubmitting = false}) => {
     const [bookData, setBookData] = useState<BookFormData>({
         title: '',
         author: '',
@@ -82,14 +83,16 @@ const AddBookForm: React.FC<AddBookFormProps> = ({onSubmit, open, onOpenChange})
                                 variant="default"
                                 type="submit"
                                 className="w-full"
+                                disabled={isSubmitting}
                             >
-                                Save Book
+                                {isSubmitting ? "Saving..." : "Save Book"}
                             </Button>
                             <Dialog.Close asChild>
                                 <Button
                                     variant="outline"
                                     type="button"
                                     className="w-full"
+                                    disabled={isSubmitting}
                                 >
                                     Cancel
                                 </Button>

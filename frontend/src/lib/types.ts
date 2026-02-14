@@ -14,6 +14,10 @@ export type BookFormData = {
   available: boolean;
 };
 
+export type ApiMessageResponse = {
+  message: string;
+};
+
 export type User = {
   id: string;
   name?: string;
@@ -32,4 +36,17 @@ export type Loan = {
   returnDate: string;
   book?: Book;
   user?: User;
+};
+
+export type AuthUser = {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: "admin" | "user";
+  accessToken: string;
+};
+
+export type AuthResponse = ApiMessageResponse & {
+  user: AuthUser;
 };

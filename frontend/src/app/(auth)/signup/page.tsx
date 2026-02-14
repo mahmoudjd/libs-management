@@ -118,6 +118,7 @@ export default function SignupPage() {
           {/* Submit Button */}
           <button
               type="submit"
+              disabled={loading}
               className="bg-blue-600 text-white flex h-12 items-center justify-center rounded gap-2 hover:cursor-pointer hover:bg-blue-500"
           >
             {loading ? (
@@ -132,8 +133,9 @@ export default function SignupPage() {
         <div className="my-4 text-center text-gray-500">Oder mit</div>
 
         <button
+          disabled={loading}
           onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-          className="w-full bg-red-500 text-white flex justify-center items-center h-12 rounded hover:cursor-pointer hover:bg-red-600"
+          className="w-full bg-red-500 text-white flex justify-center items-center h-12 rounded hover:cursor-pointer hover:bg-red-600 disabled:opacity-50"
         >
           Google Registrierung
         </button>

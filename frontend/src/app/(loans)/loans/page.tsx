@@ -18,11 +18,12 @@ export default function LoansPage() {
         userLoans,
         isLoading: loansLoading,
         returnBook,
+        returningLoanId,
         // borrowBook, // if new loans are added, this will be needed
     } = useLoans(books);
 
-    const handleReturn = async (loanId: string, bookId: string) => {
-        await returnBook(loanId, bookId);
+    const handleReturn = async (loanId: string) => {
+        await returnBook(loanId);
     };
     return (
         <PageLayout title="Loans">
@@ -33,6 +34,7 @@ export default function LoansPage() {
                     loans={isAdmin ? allLoans : userLoans}
                     onReturn={handleReturn}
                     isLoggedIn={!!session?.user}
+                    returningLoanId={returningLoanId}
                 />
             )}
 

@@ -24,8 +24,17 @@ export default function BooksPage() {
         addBook,
         deleteBook,
         editBook,
+        isAddingBook,
+        isDeletingBook,
+        deletingBookId,
+        isEditingBook,
+        editingBookId,
     } = useBooks();
-    const {borrowBook} = useLoans(books);
+    const {
+        borrowBook,
+        isBorrowingBook,
+        borrowingBookId,
+    } = useLoans(books);
     const [addBookOpen, setAddBookOpen] = useState(false);
     const [editBookDialogOpen, setEditBookDialogOpen] = useState(false);
     const [borrowBookDialogOpen, setBorrowBookDialogOpen] = useState(false);
@@ -34,7 +43,11 @@ export default function BooksPage() {
     const [searchQuery, setSearchQuery] = useState<string>("");
 
     const handleBorrow = async (bookId: string) => {
-        setSelectedBook(books.find((book) => book._id === bookId) as Book);
+        const book = books.find((item) => item._id === bookId);
+        if (!book) {
+            return;
+        }
+        setSelectedBook(book);
         setBorrowBookDialogOpen(true);
     };
 
@@ -88,6 +101,9 @@ export default function BooksPage() {
                     onEdit={handleEdit}
                     onDelete={handleDeleteClick}
                     userLoggedIn={!!session?.user}
+                    borrowingBookId={borrowingBookId}
+                    deletingBookId={deletingBookId}
+                    editingBookId={editingBookId}
                 />
             )}
 
@@ -95,6 +111,7 @@ export default function BooksPage() {
             <AddBookForm
                 open={addBookOpen}
                 onOpenChange={setAddBookOpen}
+                isSubmitting={isAddingBook}
                 onSubmit={async (data) => {
                     await addBook(data);
                     setAddBookOpen(false);
@@ -104,18 +121,22 @@ export default function BooksPage() {
                 open={editBookDialogOpen}
                 onOpenChange={setEditBookDialogOpen}
                 onSubmit={async (data) => {
-                    await editBook({ id: selectedBook?._id!, data });
+                    if (!selectedBook) {
+                        return;
+                    }
+                    await editBook({ id: selectedBook._id, data });
                     setEditBookDialogOpen(false);
                 }}
                 book={selectedBook}
+                isSubmitting={isEditingBook}
             />
             <BorrowBookDialog
                 open={borrowBookDialogOpen}
                 onOpenChange={setBorrowBookDialogOpen}
                 book={selectedBook}
+                isSubmitting={isBorrowingBook}
                 onSubmit={async (bookId, returnDate) => {
                     await borrowBook(bookId, returnDate);
-                    setBorrowBookDialogOpen(false);
                 }}
             />
             <DeleteBookDialog
@@ -123,6 +144,7 @@ export default function BooksPage() {
                 open={deleteBookDialogOpen}
                 onOpenChange={setDeleteBookDialogOpen}
                 onDelete={handleDelete}
+                isDeleting={isDeletingBook}
             />
         </PageLayout>
     );

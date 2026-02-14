@@ -82,6 +82,7 @@ export default function LoginPage() {
           <div className="my-4 text-center text-gray-500">Oder mit</div>
 
           <Button
+              disabled={loading}
               onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
               className="w-full bg-red-500 text-white flex justify-center items-center h-12 rounded hover:bg-red-600 transition"
           >

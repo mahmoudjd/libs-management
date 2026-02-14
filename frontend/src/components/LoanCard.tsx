@@ -8,10 +8,11 @@ import { toDEDateString } from "@/lib/helper/to-de-date-string";
 
 type LoanCardProps = {
     loan: Loan;
-    onReturn: (loanId: string, bookId: string) => void;
+    onReturn: (loanId: string) => void;
+    isReturning?: boolean;
 };
 
-const LoanCard: React.FC<LoanCardProps> = ({ loan, onReturn }) => {
+const LoanCard: React.FC<LoanCardProps> = ({ loan, onReturn, isReturning = false }) => {
     const now = new Date();
     const isOverdue = new Date(loan.returnDate) <= now;
     const daysUntilReturn = Math.floor((new Date(loan.returnDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
@@ -42,10 +43,10 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onReturn }) => {
 
                     <Button
                         className="bg-green-600 hover:bg-green-700 transition text-white text-xs font-semibold px-4 py-2 rounded-full disabled:opacity-50"
-                        onClick={() => onReturn(loan._id, loan.bookId)}
-                        disabled={isOverdue}
+                        onClick={() => onReturn(loan._id)}
+                        disabled={isOverdue || isReturning}
                     >
-                        Return Book
+                        {isReturning ? "Returning..." : "Return Book"}
                     </Button>
                 </div>
             </CardContent>

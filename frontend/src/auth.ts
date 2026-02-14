@@ -50,7 +50,15 @@ const authOptions: NextAuthOptions = {
           });
 
           if (loginResponse?.user) {
-            return loginResponse.user;
+            return {
+              id: loginResponse.user.id,
+              firstName: loginResponse.user.firstName,
+              lastName: loginResponse.user.lastName,
+              name: `${loginResponse.user.firstName} ${loginResponse.user.lastName}`.trim(),
+              salesRole: loginResponse.user.role,
+              email: loginResponse.user.email,
+              accessToken: loginResponse.user.accessToken,
+            };
           } else {
             throw new Error("Invalid email or password");
           }
@@ -72,13 +80,22 @@ const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }) {
       if (account?.provider === "google") {
         // For Google users, we need to set all the properties used in the session
-        const name = user?.name.split(" ")
+        const fullName = user?.name || ""
+        const [firstName, ...restName] = fullName.split(" ")
+        if (!user?.email) {
+          return token
+        }
+
         const responseGoogleLog = await googleLogin({
-          email: user?.email!,
-          firstName:name[0]!,
-          lastName: name?.slice(1).join(" ")!
+          email: user.email,
+          firstName: firstName || "",
+          lastName: restName.join(" ")
         })
         const googleUser = responseGoogleLog?.user
+        if (!googleUser) {
+          return token
+        }
+
         token.userId = googleUser.id;
         token.name = googleUser?.firstName + " " + googleUser?.lastName;
         token.firstName = googleUser?.firstName;
