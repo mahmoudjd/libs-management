@@ -4,13 +4,15 @@ import React, { useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 
+import { LoanTrendsChart } from "@/components/dashboard/loan-trends-chart"
 import { PageLayout } from "@/components/page-layout"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { GridList } from "@/components/ui/grid-list"
 import { apiClient } from "@/lib/apiClient"
 import { useDashboardKpis } from "@/lib/hooks/useDashboardKpis"
-import type { DashboardKpis } from "@/lib/types"
+import { useDashboardLoanTrends } from "@/lib/hooks/useDashboardLoanTrends"
+import type { DashboardKpis, DashboardTrendRange } from "@/lib/types"
 
 function StatCard({
     title,
@@ -43,9 +45,20 @@ export default function Dashboard() {
     const router = useRouter()
     const { data: kpis, isLoading, error } = useDashboardKpis()
     const [exportingFile, setExportingFile] = useState<string | null>(null)
+    const [selectedTrendRange, setSelectedTrendRange] = useState<DashboardTrendRange>("3m")
+    const {
+        data: loanTrends,
+        isLoading: isLoanTrendsLoading,
+        error: loanTrendsError,
+    } = useDashboardLoanTrends(selectedTrendRange)
 
     const role = session?.user?.salesRole
     const isAdmin = role === "admin"
+    const trendRangeButtons: Array<{ value: DashboardTrendRange; label: string }> = [
+        { value: "1m", label: "1M" },
+        { value: "3m", label: "3M" },
+        { value: "1y", label: "1Y" },
+    ]
 
     const handleExport = async (filename: "books.csv" | "loans.csv" | "users.csv") => {
         try {
@@ -127,6 +140,34 @@ export default function Dashboard() {
                         )}
                     </div>
                 </div>
+
+                <div className="mt-8">
+                    <div className="mb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                        <h3 className="text-lg font-semibold">All Loans Trend</h3>
+                        <div className="flex gap-2">
+                            {trendRangeButtons.map((button) => (
+                                <Button
+                                    key={button.value}
+                                    variant={selectedTrendRange === button.value ? "default" : "outline"}
+                                    onClick={() => setSelectedTrendRange(button.value)}
+                                >
+                                    {button.label}
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
+                    {isLoanTrendsLoading ? (
+                        <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-500">
+                            Loading loan trend chart...
+                        </div>
+                    ) : (loanTrendsError || !loanTrends) ? (
+                        <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-red-600">
+                            Failed to load loan trend chart.
+                        </div>
+                    ) : (
+                        <LoanTrendsChart trends={loanTrends} />
+                    )}
+                </div>
             </PageLayout>
         )
     }
@@ -147,6 +188,34 @@ export default function Dashboard() {
                     <p className="text-sm">Email: {session?.user?.email}</p>
                 </div>
             </GridList>
+
+            <div className="mt-8">
+                <div className="mb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                    <h3 className="text-lg font-semibold">My Loans Trend</h3>
+                    <div className="flex gap-2">
+                        {trendRangeButtons.map((button) => (
+                            <Button
+                                key={button.value}
+                                variant={selectedTrendRange === button.value ? "default" : "outline"}
+                                onClick={() => setSelectedTrendRange(button.value)}
+                            >
+                                {button.label}
+                            </Button>
+                        ))}
+                    </div>
+                </div>
+                {isLoanTrendsLoading ? (
+                    <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-500">
+                        Loading loan trend chart...
+                    </div>
+                ) : (loanTrendsError || !loanTrends) ? (
+                    <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-red-600">
+                        Failed to load loan trend chart.
+                    </div>
+                ) : (
+                    <LoanTrendsChart trends={loanTrends} />
+                )}
+            </div>
         </PageLayout>
     )
 }
