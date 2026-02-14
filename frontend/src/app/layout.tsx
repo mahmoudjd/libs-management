@@ -4,6 +4,7 @@ import {authOptions} from "@/auth";
 import {getServerSession} from "next-auth";
 import Providers from "@/components/Providers";
 import Header from "@/components/header";
+import { ContentContainer } from "@/components/layout/content-container";
 
 export const metadata: Metadata = {
     title: "Library Management System",
@@ -23,7 +24,9 @@ export default async function RootLayout({children}: Readonly<{
         <Providers session={session}>
             <Header/>
             <main className="flex-grow bg-slate-50 min-h-screen">
-                {children}
+                <ContentContainer>
+                    {children}
+                </ContentContainer>
             </main>
         </Providers>
         </body>

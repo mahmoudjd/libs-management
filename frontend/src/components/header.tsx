@@ -5,57 +5,38 @@ import Link from "next/link";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { NavigationDropdown } from "@/components/NavigationDropdown"; // Hier importieren wir die Dropdown-Komponente
-import {
-    BookOpenIcon,
-    ClipboardDocumentListIcon,
-    HomeIcon,
-    ShieldCheckIcon,
-    UsersIcon
-} from "@heroicons/react/24/outline"; // Heroicons Import
+import { ContentContainer } from "@/components/layout/content-container";
+import { getNavigationItems } from "@/components/navigation/navigation-items";
 
 export default function Header() {
     const { data: session, status } = useSession();
     const role = session?.user?.salesRole;
     const isAdmin = role === "admin";
     const isStaff = role === "admin" || role === "librarian";
+    const isAuthenticated = Boolean(session?.user);
     const username = session?.user?.firstName + " " + session?.user?.lastName;
+    const navigationItems = getNavigationItems({
+        isAuthenticated,
+        isAdmin,
+        isStaff,
+    });
 
     return (
-        <header className="bg-white shadow-md p-4">
-            <div className="max-w-7xl mx-auto flex justify-between items-center">
+        <header className="bg-white shadow-md">
+            <ContentContainer className="flex h-16 items-center justify-between">
 
                 <Link href="/dashboard" className="text-xl font-bold text-blue-600 flex items-center gap-2">
                     📚 <span>MyLibrary</span>
                 </Link>
 
-                <NavigationDropdown isAdmin={isAdmin} isStaff={isStaff} />
+                <NavigationDropdown items={navigationItems} />
                 <nav className="hidden md:flex items-center gap-6">
-                    <Link href="/dashboard" className="flex items-center gap-1 text-gray-700 hover:text-blue-600">
-                        <HomeIcon className="h-5 w-5" />
-                        Dashboard
-                    </Link>
-                    <Link href="/books" className="flex items-center gap-1 text-gray-700 hover:text-blue-600">
-                        <BookOpenIcon className="h-5 w-5" />
-                        Books
-                    </Link>
-                    {session && (
-                        <Link href="/loans" className="flex items-center gap-1 text-gray-700 hover:text-blue-600">
-                            <ClipboardDocumentListIcon className="h-5 w-5" />
-                            {isStaff ? "All Loans" : "My Loans"}
+                    {navigationItems.map((item) => (
+                        <Link key={item.href} href={item.href} className="flex items-center gap-1 text-gray-700 hover:text-blue-600">
+                            <item.Icon className="h-5 w-5" />
+                            {item.label}
                         </Link>
-                    )}
-                    {isAdmin && (
-                        <>
-                            <Link href="/users" className="flex items-center gap-1 text-gray-700 hover:text-blue-600">
-                                <UsersIcon className="h-5 w-5" />
-                                Users
-                            </Link>
-                            <Link href="/audit-logs" className="flex items-center gap-1 text-gray-700 hover:text-blue-600">
-                                <ShieldCheckIcon className="h-5 w-5" />
-                                Audit
-                            </Link>
-                        </>
-                    )}
+                    ))}
                 </nav>
 
                 <div className="hidden md:flex items-center gap-4">
@@ -71,12 +52,12 @@ export default function Header() {
                             </Button>
                         </>
                     ) : (
-                        <Button variant="default" size="sm" onClick={() => signIn()}>
-                            Login
-                        </Button>
+                            <Button variant="default" size="sm" onClick={() => signIn()}>
+                                Login
+                            </Button>
                     )}
                 </div>
-            </div>
+            </ContentContainer>
         </header>
     );
 }

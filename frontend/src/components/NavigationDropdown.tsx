@@ -4,22 +4,15 @@ import React from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
-import {
-    BookOpenIcon,
-    ClipboardDocumentListIcon,
-    HomeIcon,
-    ListBulletIcon,
-    ShieldCheckIcon,
-    UsersIcon
-} from "@heroicons/react/24/outline";
+import { ListBulletIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import type { NavigationItem } from "@/components/navigation/navigation-items";
 
 interface NavigationDropdownProps {
-    isAdmin: boolean;
-    isStaff: boolean;
+    items: NavigationItem[];
 }
 
-export const NavigationDropdown: React.FC<NavigationDropdownProps> = ({ isAdmin, isStaff }) => {
+export const NavigationDropdown: React.FC<NavigationDropdownProps> = ({ items }) => {
     const { data: session } = useSession();
 
     return (
@@ -33,48 +26,16 @@ export const NavigationDropdown: React.FC<NavigationDropdownProps> = ({ isAdmin,
             <DropdownMenuContent
                 side="bottom"
                 align="end"
-                className="bg-white rounded-lg shadow-lg ring-1 ring-gray-900/10 w-48 p-3 space-y-2 mt-2">
+                className="bg-white rounded-lg shadow-lg ring-1 ring-gray-900/10 w-56 p-3 space-y-2 mt-2">
 
-                <DropdownMenuItem asChild>
-                    <Link href="/dashboard" className="flex items-center gap-2 text-gray-800 hover:text-blue-600 hover:bg-blue-50 rounded-md px-2 py-1 transition duration-200 ease-in-out">
-                        <HomeIcon className="h-5 w-5" />
-                        Dashboard
-                    </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem asChild>
-                    <Link href="/books" className="flex items-center gap-2 text-gray-800 hover:text-blue-600 hover:bg-blue-50 rounded-md px-2 py-1 transition duration-200 ease-in-out">
-                        <BookOpenIcon className="h-5 w-5" />
-                        Books
-                    </Link>
-                </DropdownMenuItem>
-
-                {session && (
-                    <DropdownMenuItem asChild>
-                        <Link href="/loans" className="flex items-center gap-2 text-gray-800 hover:text-blue-600 hover:bg-blue-50 rounded-md px-2 py-1 transition duration-200 ease-in-out">
-                            <ClipboardDocumentListIcon className="h-5 w-5" />
-                            {isStaff ? "All Loans" : "My Loans"}
+                {items.map((item) => (
+                    <DropdownMenuItem asChild key={item.href}>
+                        <Link href={item.href} className="flex items-center gap-2 text-gray-800 hover:text-blue-600 hover:bg-blue-50 rounded-md px-2 py-1 transition duration-200 ease-in-out">
+                            <item.Icon className="h-5 w-5" />
+                            {item.label}
                         </Link>
                     </DropdownMenuItem>
-                )}
-
-                {isAdmin && (
-                    <DropdownMenuItem asChild>
-                        <Link href="/users" className="flex items-center gap-2 text-gray-800 hover:text-blue-600 hover:bg-blue-50 rounded-md px-2 py-1 transition duration-200 ease-in-out">
-                            <UsersIcon className="h-5 w-5" />
-                            Users
-                        </Link>
-                    </DropdownMenuItem>
-                )}
-
-                {isAdmin && (
-                    <DropdownMenuItem asChild>
-                        <Link href="/audit-logs" className="flex items-center gap-2 text-gray-800 hover:text-blue-600 hover:bg-blue-50 rounded-md px-2 py-1 transition duration-200 ease-in-out">
-                            <ShieldCheckIcon className="h-5 w-5" />
-                            Audit
-                        </Link>
-                    </DropdownMenuItem>
-                )}
+                ))}
 
                 <DropdownMenuItem asChild>
                     {session ? (
