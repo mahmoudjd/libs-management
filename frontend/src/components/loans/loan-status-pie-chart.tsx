@@ -1,4 +1,14 @@
+"use client"
+
 import React, { useMemo } from "react"
+import {
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts"
 
 type LoanStatusPieChartProps = {
   title: string
@@ -8,21 +18,14 @@ type LoanStatusPieChartProps = {
   returned: number
 }
 
-type PieSlice = {
+type PiePoint = {
   key: "active" | "overdue" | "returned"
   label: string
   value: number
   color: string
-  bgClassName: string
 }
 
-const PIE_SIZE = 230
-const PIE_STROKE = 30
-const PIE_RADIUS = (PIE_SIZE - PIE_STROKE) / 2
-const PIE_CENTER = PIE_SIZE / 2
-const CIRCUMFERENCE = 2 * Math.PI * PIE_RADIUS
-
-function percentOf(value: number, total: number) {
+function percentage(value: number, total: number) {
   if (total === 0) {
     return 0
   }
@@ -36,47 +39,16 @@ export const LoanStatusPieChart: React.FC<LoanStatusPieChartProps> = ({
   overdue,
   returned,
 }) => {
-  const slices: PieSlice[] = useMemo(() => [
-    {
-      key: "active",
-      label: "Active",
-      value: active,
-      color: "#2563eb",
-      bgClassName: "bg-blue-500",
-    },
-    {
-      key: "overdue",
-      label: "Overdue",
-      value: overdue,
-      color: "#ef4444",
-      bgClassName: "bg-red-500",
-    },
-    {
-      key: "returned",
-      label: "Returned",
-      value: returned,
-      color: "#10b981",
-      bgClassName: "bg-emerald-500",
-    },
-  ], [active, overdue, returned])
+  const chartData = useMemo<PiePoint[]>(
+    () => [
+      { key: "active", label: "Active", value: active, color: "#2563eb" },
+      { key: "overdue", label: "Overdue", value: overdue, color: "#ef4444" },
+      { key: "returned", label: "Returned", value: returned, color: "#10b981" },
+    ],
+    [active, overdue, returned]
+  )
 
   const total = active + overdue + returned
-
-  const segments = useMemo(() => {
-    let offset = 0
-    return slices.map((slice) => {
-      const ratio = total > 0 ? slice.value / total : 0
-      const dash = ratio * CIRCUMFERENCE
-      const segment = {
-        ...slice,
-        ratio,
-        dash,
-        offset,
-      }
-      offset += dash
-      return segment
-    })
-  }, [slices, total])
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -90,77 +62,75 @@ export const LoanStatusPieChart: React.FC<LoanStatusPieChartProps> = ({
           No loans to visualize yet.
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[220px_1fr] items-center">
-          <div className="mx-auto">
-            <svg width={PIE_SIZE} height={PIE_SIZE} viewBox={`0 0 ${PIE_SIZE} ${PIE_SIZE}`}>
-              <circle
-                cx={PIE_CENTER}
-                cy={PIE_CENTER}
-                r={PIE_RADIUS}
-                fill="none"
-                stroke="#e5e7eb"
-                strokeWidth={PIE_STROKE}
-              />
-              <g transform={`rotate(-90 ${PIE_CENTER} ${PIE_CENTER})`}>
-                {segments.map((segment) => {
-                  if (segment.value === 0) {
-                    return null
-                  }
-                  return (
-                    <circle
-                      key={segment.key}
-                      cx={PIE_CENTER}
-                      cy={PIE_CENTER}
-                      r={PIE_RADIUS}
-                      fill="none"
-                      stroke={segment.color}
-                      strokeWidth={PIE_STROKE}
-                      strokeDasharray={`${segment.dash} ${CIRCUMFERENCE - segment.dash}`}
-                      strokeDashoffset={-segment.offset}
-                      strokeLinecap="butt"
-                    />
-                  )
-                })}
-              </g>
-              <text
-                x={PIE_CENTER}
-                y={PIE_CENTER - 2}
-                textAnchor="middle"
-                className="fill-gray-900 text-3xl font-semibold"
-              >
-                {total}
-              </text>
-              <text
-                x={PIE_CENTER}
-                y={PIE_CENTER + 20}
-                textAnchor="middle"
-                className="fill-gray-500 text-xs"
-              >
-                loans
-              </text>
-            </svg>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr] items-center">
+          <div className="relative h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Tooltip
+                  formatter={(value) => [`${value ?? 0}`, "Loans"]}
+                  contentStyle={{
+                    borderRadius: "8px",
+                    borderColor: "#e5e7eb",
+                    fontSize: "12px",
+                  }}
+                />
+                <Legend
+                  verticalAlign="bottom"
+                  align="center"
+                  wrapperStyle={{ fontSize: "12px" }}
+                />
+                <Pie
+                  data={chartData}
+                  dataKey="value"
+                  nameKey="label"
+                  cx="50%"
+                  cy="44%"
+                  innerRadius={56}
+                  outerRadius={92}
+                  paddingAngle={2}
+                  isAnimationActive={false}
+                >
+                  {chartData.map((entry) => (
+                    <Cell key={entry.key} fill={entry.color} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <div className="text-center -translate-y-3">
+                <p className="text-3xl font-semibold text-gray-900">{total}</p>
+                <p className="text-xs text-gray-500">loans</p>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-2">
-            {segments.map((segment) => (
+            {chartData.map((point) => (
               <div
-                key={segment.key}
+                key={point.key}
                 className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2"
               >
                 <div className="mb-1 flex items-center justify-between">
                   <div className="inline-flex items-center gap-2">
-                    <span className={`h-2.5 w-2.5 rounded-sm ${segment.bgClassName}`} />
-                    <span className="text-sm font-medium text-gray-700">{segment.label}</span>
+                    <span
+                      className="h-2.5 w-2.5 rounded-sm"
+                      style={{ backgroundColor: point.color }}
+                    />
+                    <span className="text-sm font-medium text-gray-700">{point.label}</span>
                   </div>
-                  <span className="text-sm font-semibold text-gray-900">{segment.value}</span>
+                  <span className="text-sm font-semibold text-gray-900">{point.value}</span>
                 </div>
                 <div className="h-2 rounded-full bg-gray-200">
                   <div
-                    className={`h-full rounded-full ${segment.bgClassName}`}
-                    style={{ width: `${percentOf(segment.value, total)}%` }}
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${percentage(point.value, total)}%`,
+                      backgroundColor: point.color,
+                    }}
                   />
                 </div>
-                <p className="mt-1 text-[11px] text-gray-500">{percentOf(segment.value, total)}%</p>
+                <p className="mt-1 text-[11px] text-gray-500">{percentage(point.value, total)}%</p>
               </div>
             ))}
           </div>
