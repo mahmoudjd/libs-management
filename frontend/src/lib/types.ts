@@ -94,6 +94,33 @@ export type DashboardKpis =
       myPendingReservations: number;
     };
 
+export type DashboardTrendRange = "1m" | "3m" | "1y";
+
+export type DashboardLoanTrends = {
+  role: "admin" | "librarian" | "user";
+  scope: "all" | "mine";
+  range: DashboardTrendRange;
+  granularity: "day" | "month";
+  start: string;
+  end: string;
+  totals: {
+    loaned: number;
+    returned: number;
+    activeNow: number;
+    overdueNow: number;
+  };
+  points: Array<{
+    key: string;
+    label: string;
+    start: string;
+    end: string;
+    loanedCount: number;
+    returnedCount: number;
+    activeOpenCount: number;
+    overdueOpenCount: number;
+  }>;
+};
+
 export type AuditLog = {
   _id: string;
   actorUserId: string | null;
