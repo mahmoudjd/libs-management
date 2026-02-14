@@ -5,11 +5,19 @@ import Link from "next/link";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { NavigationDropdown } from "@/components/NavigationDropdown"; // Hier importieren wir die Dropdown-Komponente
-import { HomeIcon, BookOpenIcon, ClipboardDocumentListIcon } from "@heroicons/react/24/outline"; // Heroicons Import
+import {
+    BookOpenIcon,
+    ClipboardDocumentListIcon,
+    HomeIcon,
+    ShieldCheckIcon,
+    UsersIcon
+} from "@heroicons/react/24/outline"; // Heroicons Import
 
 export default function Header() {
     const { data: session, status } = useSession();
-    const isAdmin = session?.user?.salesRole === "admin";
+    const role = session?.user?.salesRole;
+    const isAdmin = role === "admin";
+    const isStaff = role === "admin" || role === "librarian";
     const username = session?.user?.firstName + " " + session?.user?.lastName;
 
     return (
@@ -20,7 +28,7 @@ export default function Header() {
                     📚 <span>MyLibrary</span>
                 </Link>
 
-                <NavigationDropdown isAdmin={isAdmin} />
+                <NavigationDropdown isAdmin={isAdmin} isStaff={isStaff} />
                 <nav className="hidden md:flex items-center gap-6">
                     <Link href="/dashboard" className="flex items-center gap-1 text-gray-700 hover:text-blue-600">
                         <HomeIcon className="h-5 w-5" />
@@ -33,8 +41,20 @@ export default function Header() {
                     {session && (
                         <Link href="/loans" className="flex items-center gap-1 text-gray-700 hover:text-blue-600">
                             <ClipboardDocumentListIcon className="h-5 w-5" />
-                            {isAdmin ? "All Loans" : "My Loans"}
+                            {isStaff ? "All Loans" : "My Loans"}
                         </Link>
+                    )}
+                    {isAdmin && (
+                        <>
+                            <Link href="/users" className="flex items-center gap-1 text-gray-700 hover:text-blue-600">
+                                <UsersIcon className="h-5 w-5" />
+                                Users
+                            </Link>
+                            <Link href="/audit-logs" className="flex items-center gap-1 text-gray-700 hover:text-blue-600">
+                                <ShieldCheckIcon className="h-5 w-5" />
+                                Audit
+                            </Link>
+                        </>
                     )}
                 </nav>
 

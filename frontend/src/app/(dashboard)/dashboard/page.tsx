@@ -1,107 +1,152 @@
-"use client";
+"use client"
 
-import React, {useEffect, useState} from "react";
-import {useSession} from "next-auth/react";
-import {useRouter} from "next/navigation";
-import {useBooks} from "@/lib/hooks/useBooks";
-import {useLoans} from "@/lib/hooks/useLoans";
-import {apiClient} from "@/lib/apiClient";
-import {PageLayout} from "@/components/page-layout";
-import {GridList} from "@/components/ui/grid-list";
+import React, { useState } from "react"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+
+import { PageLayout } from "@/components/page-layout"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { GridList } from "@/components/ui/grid-list"
+import { apiClient } from "@/lib/apiClient"
+import { useDashboardKpis } from "@/lib/hooks/useDashboardKpis"
+import type { DashboardKpis } from "@/lib/types"
+
+function StatCard({
+    title,
+    value,
+    onClick,
+}: {
+    title: string
+    value: number
+    onClick?: () => void
+}) {
+    return (
+        <div
+            className={`p-6 bg-white rounded-xl shadow-md flex flex-col items-center justify-center ${onClick ? "cursor-pointer hover:shadow-lg" : ""}`}
+            onClick={onClick}
+        >
+            <h2 className="text-lg font-semibold mb-2">{title}</h2>
+            <p className="text-3xl">{value}</p>
+        </div>
+    )
+}
+
+function isStaffKpis(
+    kpis: DashboardKpis
+): kpis is Extract<DashboardKpis, { role: "admin" | "librarian" }> {
+    return kpis.role === "admin" || kpis.role === "librarian"
+}
 
 export default function Dashboard() {
-    const {data: session} = useSession();
-    const router = useRouter();
+    const { data: session } = useSession()
+    const router = useRouter()
+    const { data: kpis, isLoading, error } = useDashboardKpis()
+    const [exportingFile, setExportingFile] = useState<string | null>(null)
 
-    const {books, isLoading: booksLoading} = useBooks();
-    const {allLoans, userLoans, isLoading: loansLoading} = useLoans(books);
+    const role = session?.user?.salesRole
+    const isAdmin = role === "admin"
 
-    const [userCount, setUserCount] = useState<number>(0);
+    const handleExport = async (filename: "books.csv" | "loans.csv" | "users.csv") => {
+        try {
+            setExportingFile(filename)
+            const response = await apiClient.get(`/exports/${filename}`, {
+                responseType: "blob",
+            })
 
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const response = await apiClient.get("/auth/users"); // API Endpoint für User-Liste
-                setUserCount(response.data.length);
-            } catch (error) {
-                console.error("Error fetching users:", error);
-            }
-        };
-
-        if (session?.user?.salesRole === "admin") {
-            fetchUsers();
+            const blobUrl = window.URL.createObjectURL(new Blob([response.data]))
+            const link = document.createElement("a")
+            link.href = blobUrl
+            link.download = filename
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            window.URL.revokeObjectURL(blobUrl)
+        } finally {
+            setExportingFile(null)
         }
-    }, [session]);
-
-    if (booksLoading || loansLoading) {
-        return <div className="p-6">Loading Dashboard...</div>;
     }
 
-    if (session?.user?.salesRole === "admin") {
+    if (isLoading) {
+        return <div className="p-6">Loading Dashboard...</div>
+    }
+
+    if (error || !kpis) {
+        return <div className="p-6">Failed to load dashboard.</div>
+    }
+
+    if (isStaffKpis(kpis)) {
         return (
-            <PageLayout title="Admin Dashboard">
+            <PageLayout title={kpis.role === "admin" ? "Admin Dashboard" : "Librarian Dashboard"}>
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => handleExport("books.csv")}
+                        disabled={exportingFile !== null}
+                    >
+                        {exportingFile === "books.csv" ? "Exporting..." : "Export Books CSV"}
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => handleExport("loans.csv")}
+                        disabled={exportingFile !== null}
+                    >
+                        {exportingFile === "loans.csv" ? "Exporting..." : "Export Loans CSV"}
+                    </Button>
+                    {isAdmin && (
+                        <Button
+                            variant="outline"
+                            onClick={() => handleExport("users.csv")}
+                            disabled={exportingFile !== null}
+                        >
+                            {exportingFile === "users.csv" ? "Exporting..." : "Export Users CSV"}
+                        </Button>
+                    )}
+                </div>
 
                 <GridList>
-                    {/* Total Books Box */}
-                    <div
-                        className="p-6 bg-white rounded-xl shadow-md flex flex-col items-center justify-center cursor-pointer"
-                        onClick={() => router.push("/books")}
-                    >
-                        <h2 className="text-lg font-semibold mb-2">Total Books</h2>
-                        <p className="text-3xl">{books.length}</p>
-                    </div>
-
-                    {/* Total Users Box */}
-                    <div
-                        className="p-6 bg-white rounded-xl shadow-md flex flex-col items-center justify-center cursor-pointer"
-                        onClick={() => router.push("/users")}>
-                        <h2 className="text-lg font-semibold mb-2">Total Users</h2>
-                        <p className="text-3xl">{userCount}</p>
-                    </div>
-
-                    {/* All Loans Box */}
-                    <div
-                        className="p-6 bg-white rounded-xl shadow-md flex flex-col items-center justify-center cursor-pointer"
-                        onClick={() => router.push("/loans")}
-                    >
-                        <h2 className="text-lg font-semibold mb-2">All Loans</h2>
-                        <p className="text-3xl">{allLoans.length}</p>
-                    </div>
+                    <StatCard title="Total Books" value={kpis.totalBooks} onClick={() => router.push("/books")} />
+                    <StatCard title="Available Books" value={kpis.availableBooks} onClick={() => router.push("/books")} />
+                    <StatCard title="Total Users" value={kpis.totalUsers} onClick={() => router.push("/users")} />
+                    <StatCard title="Active Loans" value={kpis.activeLoans} onClick={() => router.push("/loans")} />
+                    <StatCard title="Overdue Loans" value={kpis.overdueLoans} onClick={() => router.push("/loans")} />
+                    <StatCard title="Pending Reservations" value={kpis.pendingReservations} onClick={() => router.push("/books")} />
                 </GridList>
+
+                <div className="mt-8 rounded-lg border border-gray-200 bg-white p-4">
+                    <h3 className="font-semibold mb-3">Top Genres</h3>
+                    <div className="flex flex-wrap gap-2">
+                        {kpis.topGenres.length === 0 ? (
+                            <span className="text-sm text-gray-500">No data available</span>
+                        ) : (
+                            kpis.topGenres.map((genre) => (
+                                <Badge key={genre.genre} variant="secondary">
+                                    {genre.genre}: {genre.count}
+                                </Badge>
+                            ))
+                        )}
+                    </div>
+                </div>
             </PageLayout>
-        );
+        )
     }
 
-    // User Dashboard
+    const userKpis = kpis as Extract<DashboardKpis, { role: "user" }>
+
     return (
         <PageLayout title="User Dashboard">
-
             <GridList>
-                {/* Total Books Box */}
-                <div
-                    className="p-6 bg-white rounded-xl shadow-md flex flex-col items-center justify-center cursor-pointer"
-                    onClick={() => router.push("/books")}
-                >
-                    <h2 className="text-lg font-semibold mb-2">Total Books</h2>
-                    <p className="text-3xl">{books.length}</p>
-                </div>
-
-                {/* My Loans Box */}
-                <div
-                    className="p-6 bg-white rounded-xl shadow-md flex flex-col items-center justify-center cursor-pointer"
-                    onClick={() => router.push("/loans")}
-                >
-                    <h2 className="text-lg font-semibold mb-2">My Loans</h2>
-                    <p className="text-3xl">{userLoans.length}</p>
-                </div>
-
-                {/* User Info Box */}
-                <div className="p-6 bg-white rounded-xl shadow-md flex flex-col items-center justify-center">
+                <StatCard title="Total Books" value={userKpis.totalBooks} onClick={() => router.push("/books")} />
+                <StatCard title="Available Books" value={userKpis.availableBooks} onClick={() => router.push("/books")} />
+                <StatCard title="My Active Loans" value={userKpis.myActiveLoans} onClick={() => router.push("/loans")} />
+                <StatCard title="My Overdue Loans" value={userKpis.myOverdueLoans} onClick={() => router.push("/loans")} />
+                <StatCard title="My Pending Reservations" value={userKpis.myPendingReservations} onClick={() => router.push("/books")} />
+                <div className="p-6 bg-white rounded-xl shadow-md flex flex-col justify-center">
                     <h2 className="text-lg font-semibold mb-2">User Info</h2>
                     <p className="text-sm">Name: {session?.user?.name}</p>
                     <p className="text-sm">Email: {session?.user?.email}</p>
                 </div>
             </GridList>
         </PageLayout>
-    );
+    )
 }

@@ -1,45 +1,47 @@
-import React, { useState, useEffect } from 'react';
-import { Book, BookFormData } from "@/lib/types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import * as Dialog from "@radix-ui/react-dialog";
+import React, { useState, useEffect } from "react"
+import * as Dialog from "@radix-ui/react-dialog"
+
+import { Book, BookFormData } from "@/lib/types"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
 interface EditBookDialogProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    onSubmit: (data: BookFormData) => Promise<void>;
-    book: Book | null;
-    isSubmitting?: boolean;
+    open: boolean
+    onOpenChange: (open: boolean) => void
+    onSubmit: (data: BookFormData) => Promise<void>
+    book: Book | null
+    isSubmitting?: boolean
 }
 
 const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onOpenChange, onSubmit, book, isSubmitting = false }) => {
-    const [title, setTitle] = useState(book?.title || '');
-    const [author, setAuthor] = useState(book?.author || '');
-    const [genre, setGenre] = useState(book?.genre || '');
-    const [available, setAvailable] = useState(book?.available || false);
+    const [title, setTitle] = useState(book?.title || "")
+    const [author, setAuthor] = useState(book?.author || "")
+    const [genre, setGenre] = useState(book?.genre || "")
+    const [totalCopies, setTotalCopies] = useState<number>(book?.totalCopies || 1)
+    const [availableCopies, setAvailableCopies] = useState<number>(book?.availableCopies || 0)
 
-    // useEffect, um den State zu aktualisieren, wenn book sich ändert
     useEffect(() => {
         if (book) {
-            setTitle(book.title);
-            setAuthor(book.author);
-            setGenre(book.genre);
-            setAvailable(book.available);
+            setTitle(book.title)
+            setAuthor(book.author)
+            setGenre(book.genre)
+            setTotalCopies(book.totalCopies)
+            setAvailableCopies(book.availableCopies)
         }
-    }, [book]);
+    }, [book])
 
     const handleSubmit = async () => {
         if (book) {
             await onSubmit({
-                ...book,
                 title,
                 author,
                 genre,
-                available
-            });
-            onOpenChange(false);
+                totalCopies,
+                availableCopies,
+            })
+            onOpenChange(false)
         }
-    };
+    }
 
     return (
         <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -89,16 +91,31 @@ const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onOpenChange, onS
                         />
                     </div>
 
-                    <div className="mb-4 flex items-center">
-                        <input
-                            id="available"
-                            type="checkbox"
-                            checked={available}
-                            onChange={(e) => setAvailable(e.target.checked)}
-                            className="mr-2 rounded-md border-gray-300 text-blue-500 focus:ring-2 focus:ring-blue-500"
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium mb-2" htmlFor="totalCopies">Total Copies</label>
+                        <Input
+                            id="totalCopies"
+                            type="number"
+                            min={1}
+                            value={totalCopies}
+                            onChange={(e) => setTotalCopies(Number.parseInt(e.target.value, 10) || 1)}
+                            className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             disabled={isSubmitting}
                         />
-                        <label htmlFor="available" className="text-sm font-medium">Available for Borrowing</label>
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium mb-2" htmlFor="availableCopies">Available Copies</label>
+                        <Input
+                            id="availableCopies"
+                            type="number"
+                            min={0}
+                            max={totalCopies}
+                            value={availableCopies}
+                            onChange={(e) => setAvailableCopies(Number.parseInt(e.target.value, 10) || 0)}
+                            className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={isSubmitting}
+                        />
                     </div>
 
                     <div className="flex justify-between gap-4">
@@ -121,7 +138,7 @@ const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onOpenChange, onS
                 </Dialog.Content>
             </Dialog.Portal>
         </Dialog.Root>
-    );
-};
+    )
+}
 
-export default EditBookDialog;
+export default EditBookDialog

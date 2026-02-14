@@ -1,46 +1,55 @@
-import React, {useState} from 'react';
-import * as Dialog from '@radix-ui/react-dialog';
-import {BookFormData} from '@/lib/types';
-import {Input} from "@/components/ui/input";
-import {Button} from "@/components/ui/button";
+import React, { useState } from "react"
+import * as Dialog from "@radix-ui/react-dialog"
+
+import { BookFormData } from "@/lib/types"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 
 type AddBookFormProps = {
-    onSubmit: (bookData: BookFormData) => Promise<void>;
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    isSubmitting?: boolean;
-};
+    onSubmit: (bookData: BookFormData) => Promise<void>
+    open: boolean
+    onOpenChange: (open: boolean) => void
+    isSubmitting?: boolean
+}
 
-const AddBookForm: React.FC<AddBookFormProps> = ({onSubmit, open, onOpenChange, isSubmitting = false}) => {
-    const [bookData, setBookData] = useState<BookFormData>({
-        title: '',
-        author: '',
-        genre: '',
-        available: true,
-    });
+const EMPTY_BOOK_FORM: BookFormData = {
+    title: "",
+    author: "",
+    genre: "",
+    totalCopies: 1,
+    availableCopies: 1,
+}
+
+const AddBookForm: React.FC<AddBookFormProps> = ({ onSubmit, open, onOpenChange, isSubmitting = false }) => {
+    const [bookData, setBookData] = useState<BookFormData>(EMPTY_BOOK_FORM)
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const {name, value} = e.target;
-        setBookData((prev) => ({...prev, [name]: value}));
-    };
+        const { name, value } = e.target
+        if (name === "totalCopies" || name === "availableCopies") {
+            const parsed = Number.parseInt(value, 10)
+            setBookData((prev) => ({
+                ...prev,
+                [name]: Number.isNaN(parsed) ? undefined : parsed,
+            }))
+            return
+        }
+
+        setBookData((prev) => ({ ...prev, [name]: value }))
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        await onSubmit(bookData);
-        setBookData({
-            title: '',
-            author: '',
-            genre: '',
-            available: true,
-        });
-    };
+        e.preventDefault()
+        await onSubmit(bookData)
+        setBookData(EMPTY_BOOK_FORM)
+    }
 
     return (
         <Dialog.Root open={open} onOpenChange={onOpenChange}>
             <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 bg-black/50"/>
+                <Dialog.Overlay className="fixed inset-0 bg-black/50" />
                 <Dialog.Content
-                    className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+                    className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg w-full max-w-md"
+                >
                     <Dialog.Title className="text-lg font-semibold mb-4">Add New Book</Dialog.Title>
                     <form onSubmit={handleSubmit}>
                         <div className="grid grid-cols-1 gap-4">
@@ -53,6 +62,7 @@ const AddBookForm: React.FC<AddBookFormProps> = ({onSubmit, open, onOpenChange, 
                                     value={bookData.title}
                                     onChange={handleChange}
                                     required
+                                    disabled={isSubmitting}
                                 />
                             </div>
                             <div>
@@ -64,6 +74,7 @@ const AddBookForm: React.FC<AddBookFormProps> = ({onSubmit, open, onOpenChange, 
                                     value={bookData.author}
                                     onChange={handleChange}
                                     required
+                                    disabled={isSubmitting}
                                 />
                             </div>
                             <div>
@@ -75,6 +86,33 @@ const AddBookForm: React.FC<AddBookFormProps> = ({onSubmit, open, onOpenChange, 
                                     value={bookData.genre}
                                     onChange={handleChange}
                                     required
+                                    disabled={isSubmitting}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Total Copies</label>
+                                <Input
+                                    type="number"
+                                    min={1}
+                                    name="totalCopies"
+                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                                    value={bookData.totalCopies ?? ""}
+                                    onChange={handleChange}
+                                    required
+                                    disabled={isSubmitting}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Available Copies</label>
+                                <Input
+                                    type="number"
+                                    min={0}
+                                    name="availableCopies"
+                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                                    value={bookData.availableCopies ?? ""}
+                                    onChange={handleChange}
+                                    required
+                                    disabled={isSubmitting}
                                 />
                             </div>
                         </div>
@@ -103,7 +141,7 @@ const AddBookForm: React.FC<AddBookFormProps> = ({onSubmit, open, onOpenChange, 
                 </Dialog.Content>
             </Dialog.Portal>
         </Dialog.Root>
-    );
-};
+    )
+}
 
-export default AddBookForm;
+export default AddBookForm

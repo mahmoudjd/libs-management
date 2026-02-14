@@ -1,22 +1,36 @@
-import React from 'react';
-import LoanCard from './LoanCard';
-import {Loan} from '@/lib/types';
-import {GridList} from "@/components/ui/grid-list";
+import React from "react"
+
+import LoanCard from "./LoanCard"
+import type { Loan } from "@/lib/types"
+import { GridList } from "@/components/ui/grid-list"
 
 type LoanListProps = {
-    loans: Loan[];
-    onReturn: (loanId: string) => void;
-    isLoggedIn: boolean;
-    returningLoanId?: string;
-};
+    loans: Loan[]
+    onReturn: (loanId: string) => void
+    onExtend: (loanId: string) => void
+    isLoggedIn: boolean
+    isStaff: boolean
+    returningLoanId?: string
+    extendingLoanId?: string
+    emptyStateText?: string
+}
 
-const LoanList: React.FC<LoanListProps> = ({loans, onReturn, isLoggedIn, returningLoanId}) => {
+const LoanList: React.FC<LoanListProps> = ({
+    loans,
+    onReturn,
+    onExtend,
+    isLoggedIn,
+    isStaff,
+    returningLoanId,
+    extendingLoanId,
+    emptyStateText,
+}) => {
     if (!isLoggedIn) {
-        return <p className="text-center text-gray-500">Please log in to view your loans.</p>;
+        return <p className="text-center text-gray-500">Please log in to view your loans.</p>
     }
 
     if (loans.length === 0) {
-        return <p className="text-center text-gray-500">You haven't borrowed any books yet.</p>;
+        return <p className="text-center text-gray-500">{emptyStateText ?? "No loans found."}</p>
     }
 
     return (
@@ -26,11 +40,14 @@ const LoanList: React.FC<LoanListProps> = ({loans, onReturn, isLoggedIn, returni
                     key={loan._id}
                     loan={loan}
                     onReturn={onReturn}
+                    onExtend={onExtend}
+                    isStaff={isStaff}
                     isReturning={returningLoanId === loan._id}
+                    isExtending={extendingLoanId === loan._id}
                 />
             ))}
         </GridList>
-    );
-};
+    )
+}
 
-export default LoanList;
+export default LoanList
