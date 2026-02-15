@@ -18,7 +18,7 @@ export const NavigationDropdown: React.FC<NavigationDropdownProps> = ({ items })
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="flex md:hidden">
+                <Button variant="ghost" size="sm" className="flex lg:hidden">
                     <ListBulletIcon className="h-6 w-6" />
                 </Button>
             </DropdownMenuTrigger>
