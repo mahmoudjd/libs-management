@@ -25,11 +25,28 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSubmit, open, onOpenChange,
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
-        if (name === "totalCopies" || name === "availableCopies") {
+        if (name === "totalCopies") {
             const parsed = Number.parseInt(value, 10)
+            const nextTotalCopies = Number.isNaN(parsed) ? undefined : Math.max(parsed, 1)
             setBookData((prev) => ({
                 ...prev,
-                [name]: Number.isNaN(parsed) ? undefined : parsed,
+                totalCopies: nextTotalCopies,
+                availableCopies:
+                    nextTotalCopies === undefined
+                        ? prev.availableCopies
+                        : Math.min(prev.availableCopies ?? nextTotalCopies, nextTotalCopies),
+            }))
+            return
+        }
+
+        if (name === "availableCopies") {
+            const parsed = Number.parseInt(value, 10)
+            const nextAvailable = Number.isNaN(parsed)
+                ? undefined
+                : Math.max(0, Math.min(parsed, bookData.totalCopies ?? parsed))
+            setBookData((prev) => ({
+                ...prev,
+                availableCopies: nextAvailable,
             }))
             return
         }
@@ -107,6 +124,7 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSubmit, open, onOpenChange,
                                 <Input
                                     type="number"
                                     min={0}
+                                    max={bookData.totalCopies ?? undefined}
                                     name="availableCopies"
                                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                                     value={bookData.availableCopies ?? ""}

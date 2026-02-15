@@ -12,6 +12,7 @@ import { PageLayout } from "@/components/page-layout"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { getApiErrorMessage } from "@/lib/api-error"
 import { useBooks } from "@/lib/hooks/useBooks"
 import { useLoans } from "@/lib/hooks/useLoans"
 import { useReservations } from "@/lib/hooks/useReservations"
@@ -66,6 +67,7 @@ export default function BooksPage() {
   const [deleteBookDialogOpen, setDeleteBookDialogOpen] = useState(false)
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [cancellingReservationId, setCancellingReservationId] = useState<string | null>(null)
+  const [bookActionError, setBookActionError] = useState<string | null>(null)
 
   const pendingReservations = useMemo(
     () => myReservations.filter((reservation) => reservation.status === "pending"),
@@ -97,8 +99,13 @@ export default function BooksPage() {
   }
 
   const handleDelete = async (bookId: string) => {
-    await deleteBook(bookId)
-    setDeleteBookDialogOpen(false)
+    try {
+      setBookActionError(null)
+      await deleteBook(bookId)
+      setDeleteBookDialogOpen(false)
+    } catch (error) {
+      setBookActionError(getApiErrorMessage(error, "Failed to delete book"))
+    }
   }
 
   const handleReserve = async (bookId: string) => {
@@ -196,6 +203,12 @@ export default function BooksPage() {
         />
       )}
 
+      {bookActionError && (
+        <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {bookActionError}
+        </div>
+      )}
+
       {!isStaff && pendingReservations.length > 0 && (
         <div className="mt-8 rounded-lg border border-gray-200 bg-white p-4">
           <h2 className="text-lg font-semibold text-gray-900 mb-3">My Reservations</h2>
@@ -229,8 +242,14 @@ export default function BooksPage() {
         onOpenChange={setAddBookOpen}
         isSubmitting={isAddingBook}
         onSubmit={async (data) => {
-          await addBook(data)
-          setAddBookOpen(false)
+          try {
+            setBookActionError(null)
+            await addBook(data)
+            setAddBookOpen(false)
+          } catch (error) {
+            setBookActionError(getApiErrorMessage(error, "Failed to create book"))
+            throw error
+          }
         }}
       />
 
@@ -241,8 +260,14 @@ export default function BooksPage() {
           if (!selectedBook) {
             return
           }
-          await editBook({ id: selectedBook._id, data })
-          setEditBookDialogOpen(false)
+          try {
+            setBookActionError(null)
+            await editBook({ id: selectedBook._id, data })
+            setEditBookDialogOpen(false)
+          } catch (error) {
+            setBookActionError(getApiErrorMessage(error, "Failed to update book"))
+            throw error
+          }
         }}
         book={selectedBook}
         isSubmitting={isEditingBook}

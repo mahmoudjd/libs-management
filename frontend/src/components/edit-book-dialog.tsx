@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import * as Dialog from "@radix-ui/react-dialog"
 
 import { Book, BookFormData } from "@/lib/types"
@@ -20,6 +20,21 @@ const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onOpenChange, onS
     const [totalCopies, setTotalCopies] = useState<number>(book?.totalCopies || 1)
     const [availableCopies, setAvailableCopies] = useState<number>(book?.availableCopies || 0)
 
+    const estimatedActiveLoans = useMemo(() => {
+        if (!book) {
+            return 0
+        }
+        return Math.max(0, book.totalCopies - book.availableCopies)
+    }, [book])
+
+    const minTotalCopies = useMemo(() => {
+        return Math.max(1, estimatedActiveLoans)
+    }, [estimatedActiveLoans])
+
+    const maxAvailableCopies = useMemo(() => {
+        return Math.max(0, totalCopies - estimatedActiveLoans)
+    }, [estimatedActiveLoans, totalCopies])
+
     useEffect(() => {
         if (book) {
             setTitle(book.title)
@@ -29,6 +44,12 @@ const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onOpenChange, onS
             setAvailableCopies(book.availableCopies)
         }
     }, [book])
+
+    useEffect(() => {
+        if (availableCopies > maxAvailableCopies) {
+            setAvailableCopies(maxAvailableCopies)
+        }
+    }, [availableCopies, maxAvailableCopies])
 
     const handleSubmit = async () => {
         if (book) {
@@ -96,12 +117,23 @@ const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onOpenChange, onS
                         <Input
                             id="totalCopies"
                             type="number"
-                            min={1}
+                            min={minTotalCopies}
                             value={totalCopies}
-                            onChange={(e) => setTotalCopies(Number.parseInt(e.target.value, 10) || 1)}
+                            onChange={(e) => {
+                                const parsed = Number.parseInt(e.target.value, 10)
+                                const safeValue = Number.isFinite(parsed) && !Number.isNaN(parsed)
+                                    ? Math.max(parsed, minTotalCopies)
+                                    : minTotalCopies
+                                setTotalCopies(safeValue)
+                            }}
                             className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             disabled={isSubmitting}
                         />
+                        {estimatedActiveLoans > 0 && (
+                            <p className="mt-1 text-xs text-gray-500">
+                                {estimatedActiveLoans} active loans currently require at least {minTotalCopies} total copies.
+                            </p>
+                        )}
                     </div>
 
                     <div className="mb-4">
@@ -110,12 +142,21 @@ const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onOpenChange, onS
                             id="availableCopies"
                             type="number"
                             min={0}
-                            max={totalCopies}
+                            max={maxAvailableCopies}
                             value={availableCopies}
-                            onChange={(e) => setAvailableCopies(Number.parseInt(e.target.value, 10) || 0)}
+                            onChange={(e) => {
+                                const parsed = Number.parseInt(e.target.value, 10)
+                                const safeValue = Number.isFinite(parsed) && !Number.isNaN(parsed)
+                                    ? Math.max(0, Math.min(parsed, maxAvailableCopies))
+                                    : 0
+                                setAvailableCopies(safeValue)
+                            }}
                             className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             disabled={isSubmitting}
                         />
+                        <p className="mt-1 text-xs text-gray-500">
+                            Max available with current active loans: {maxAvailableCopies}
+                        </p>
                     </div>
 
                     <div className="flex justify-between gap-4">
