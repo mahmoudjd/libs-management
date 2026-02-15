@@ -8,6 +8,7 @@ import { LoanStatusPieChart } from "@/components/loans/loan-status-pie-chart"
 import { PageLayout } from "@/components/page-layout"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { getApiErrorMessage } from "@/lib/api-error"
 import { useBooks } from "@/lib/hooks/useBooks"
 import { useLoans } from "@/lib/hooks/useLoans"
 
@@ -34,6 +35,7 @@ export default function LoansPage() {
 
     const [selectedView, setSelectedView] = useState<LoanView>(isStaff ? "all" : "active")
     const [reminderResult, setReminderResult] = useState<string | null>(null)
+    const [loanActionError, setLoanActionError] = useState<string | null>(null)
 
     const baseLoans = isStaff ? allLoans : userLoans
     const visibleLoans = useMemo(() => {
@@ -59,16 +61,31 @@ export default function LoansPage() {
     }, [baseLoans])
 
     const handleReturn = async (loanId: string) => {
-        await returnBook(loanId)
+        try {
+            setLoanActionError(null)
+            await returnBook(loanId)
+        } catch (error) {
+            setLoanActionError(getApiErrorMessage(error, "Failed to return loan"))
+        }
     }
 
     const handleExtend = async (loanId: string) => {
-        await extendLoan(loanId, 7)
+        try {
+            setLoanActionError(null)
+            await extendLoan(loanId, 7)
+        } catch (error) {
+            setLoanActionError(getApiErrorMessage(error, "Failed to extend loan"))
+        }
     }
 
     const handlePrepareReminders = async () => {
-        const response = await prepareOverdueReminders()
-        setReminderResult(`${response.count} overdue reminders prepared`)
+        try {
+            setLoanActionError(null)
+            const response = await prepareOverdueReminders()
+            setReminderResult(`${response.count} overdue reminders prepared`)
+        } catch (error) {
+            setLoanActionError(getApiErrorMessage(error, "Failed to prepare reminders"))
+        }
     }
 
     const viewButtons: Array<{ key: LoanView; label: string; count: number }> = [
@@ -121,6 +138,12 @@ export default function LoansPage() {
                     returned={counts.returned}
                 />
             </div>
+
+            {loanActionError && (
+                <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    {loanActionError}
+                </div>
+            )}
 
             {(booksLoading || loansLoading) ? (
                 <p>Loading loans...</p>
