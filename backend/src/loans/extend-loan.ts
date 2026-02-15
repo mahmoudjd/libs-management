@@ -83,7 +83,10 @@ export const extendLoanHandler = (appCtx: AppContext) => async (req: Authenticat
       {
         _id: parsedLoanId,
         returnedAt: null,
-        extensionCount: { $lt: MAX_EXTENSIONS },
+        $or: [
+          { extensionCount: { $lt: MAX_EXTENSIONS } },
+          { extensionCount: { $exists: false } },
+        ],
       },
       {
         $set: {
