@@ -3,8 +3,9 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { ArrowDownTrayIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline"
+import { ArrowDownTrayIcon, MagnifyingGlassIcon, UserPlusIcon } from "@heroicons/react/24/outline"
 
+import CreateUserDialog from "@/components/users/create-user-dialog"
 import UserCard from "@/components/users/user-card"
 import { PageLayout } from "@/components/page-layout"
 import { Alert } from "@/components/ui/alert"
@@ -20,9 +21,10 @@ import { useUsers } from "@/lib/hooks/useUsers"
 import type { UserRole } from "@/lib/types"
 
 type RoleFilter = "all" | UserRole
+type StatusFilter = "all" | "active" | "disabled"
 
 const roleFilterOptions: Array<{ value: RoleFilter; label: string }> = [
-    { value: "all", label: "All" },
+    { value: "all", label: "All roles" },
     { value: "user", label: "Users" },
     { value: "librarian", label: "Librarians" },
     { value: "admin", label: "Admins" },
@@ -33,11 +35,15 @@ export default function UsersPage() {
     const router = useRouter()
     const isAdmin = session?.user?.salesRole === "admin"
 
-    const { users, isLoading, error, updateRole, updatingUserId } = useUsers(isAdmin)
+    const { users, isLoading, error, updateRole, updatingUserId, createUser, isCreatingUser } =
+        useUsers(isAdmin)
     const { exportFile, exportingFile, exportError } = useCsvExport()
     const [searchQuery, setSearchQuery] = useState("")
     const [roleFilter, setRoleFilter] = useState<RoleFilter>("all")
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
     const [actionError, setActionError] = useState<string | null>(null)
+    const [createDialogOpen, setCreateDialogOpen] = useState(false)
+    const [createError, setCreateError] = useState<string | null>(null)
 
     useEffect(() => {
         if (status === "loading") {
@@ -48,11 +54,26 @@ export default function UsersPage() {
         }
     }, [session, status, router])
 
+    const statusFilterOptions: Array<{ value: StatusFilter; label: string; count: number }> = useMemo(() => {
+        const disabledCount = users.filter((user) => user.disabled).length
+        return [
+            { value: "all", label: "All", count: users.length },
+            { value: "active", label: "Active", count: users.length - disabledCount },
+            { value: "disabled", label: "Disabled", count: disabledCount },
+        ]
+    }, [users])
+
     const visibleUsers = useMemo(() => {
         const normalizedQuery = searchQuery.trim().toLowerCase()
 
         return users.filter((user) => {
             if (roleFilter !== "all" && user.role !== roleFilter) {
+                return false
+            }
+            if (statusFilter === "active" && user.disabled) {
+                return false
+            }
+            if (statusFilter === "disabled" && !user.disabled) {
                 return false
             }
             if (normalizedQuery === "") {
@@ -62,7 +83,7 @@ export default function UsersPage() {
                 .toLowerCase()
                 .includes(normalizedQuery)
         })
-    }, [users, roleFilter, searchQuery])
+    }, [users, roleFilter, statusFilter, searchQuery])
 
     const handleUpdateRole = async (userId: string, role: UserRole) => {
         try {
@@ -80,19 +101,30 @@ export default function UsersPage() {
     return (
         <PageLayout
             title="Users"
-            description="Manage who can borrow, who can run the desk and who administers the system."
+            description="Manage who can borrow, who runs the desk and who administers the system."
             actions={
-                <Button
-                    variant="outline"
-                    onClick={() => exportFile("users.csv")}
-                    disabled={exportingFile !== null}
-                >
-                    <ArrowDownTrayIcon aria-hidden="true" className="h-4 w-4" />
-                    {exportingFile === "users.csv" ? "Exporting..." : "Export users CSV"}
-                </Button>
+                <>
+                    <Button
+                        onClick={() => {
+                            setCreateError(null)
+                            setCreateDialogOpen(true)
+                        }}
+                    >
+                        <UserPlusIcon aria-hidden="true" className="h-4 w-4" />
+                        Create user
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => exportFile("users.csv")}
+                        disabled={exportingFile !== null}
+                    >
+                        <ArrowDownTrayIcon aria-hidden="true" className="h-4 w-4" />
+                        {exportingFile === "users.csv" ? "Exporting..." : "Export CSV"}
+                    </Button>
+                </>
             }
         >
-            <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="mb-6 flex flex-col gap-3">
                 <div className="relative w-full lg:max-w-sm">
                     <label htmlFor="user-search" className="sr-only">
                         Search users
@@ -110,12 +142,20 @@ export default function UsersPage() {
                         onChange={(event) => setSearchQuery(event.target.value)}
                     />
                 </div>
-                <SegmentedControl
-                    label="Filter users by role"
-                    options={roleFilterOptions}
-                    value={roleFilter}
-                    onChange={setRoleFilter}
-                />
+                <div className="flex flex-wrap gap-3">
+                    <SegmentedControl
+                        label="Filter users by role"
+                        options={roleFilterOptions}
+                        value={roleFilter}
+                        onChange={setRoleFilter}
+                    />
+                    <SegmentedControl
+                        label="Filter users by account status"
+                        options={statusFilterOptions}
+                        value={statusFilter}
+                        onChange={setStatusFilter}
+                    />
+                </div>
             </div>
 
             {(error || actionError || exportError) && (
@@ -127,13 +167,13 @@ export default function UsersPage() {
             {isLoading ? (
                 <GridList>
                     {Array.from({ length: 6 }, (_, index) => (
-                        <Skeleton key={index} className="h-40 w-full rounded-2xl" />
+                        <Skeleton key={index} className="h-52 w-full rounded-2xl" />
                     ))}
                 </GridList>
             ) : visibleUsers.length === 0 ? (
                 <EmptyState
                     title="No users found"
-                    description="Try a different search term or role filter."
+                    description="Try a different search term or filter."
                 />
             ) : (
                 <GridList>
@@ -148,6 +188,22 @@ export default function UsersPage() {
                     ))}
                 </GridList>
             )}
+
+            <CreateUserDialog
+                open={createDialogOpen}
+                onOpenChange={setCreateDialogOpen}
+                isSubmitting={isCreatingUser}
+                error={createError}
+                onSubmit={async (newUser) => {
+                    try {
+                        setCreateError(null)
+                        await createUser(newUser)
+                        setCreateDialogOpen(false)
+                    } catch (submitError) {
+                        setCreateError(getApiErrorMessage(submitError, "Failed to create user"))
+                    }
+                }}
+            />
         </PageLayout>
     )
 }

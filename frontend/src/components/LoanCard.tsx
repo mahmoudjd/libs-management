@@ -8,11 +8,13 @@ import { toDEDateString } from "@/lib/helper/to-de-date-string";
 
 type LoanCardProps = {
     loan: Loan
-    onReturn: (loanId: string) => void
-    onExtend: (loanId: string) => void
+    onReturn?: (loanId: string) => void
+    onExtend?: (loanId: string) => void
     isStaff: boolean
     isReturning?: boolean
     isExtending?: boolean
+    /** Renders the card without actions, for views that only report on a loan. */
+    readOnly?: boolean
 }
 
 const MAX_EXTENSIONS = 2
@@ -34,6 +36,7 @@ const LoanCard: React.FC<LoanCardProps> = ({
     isStaff,
     isReturning = false,
     isExtending = false,
+    readOnly = false,
 }) => {
     const now = new Date()
     const isReturned = Boolean(loan.returnedAt)
@@ -92,25 +95,27 @@ const LoanCard: React.FC<LoanCardProps> = ({
                     </div>
                 </dl>
 
-                <div className="mt-auto flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onExtend(loan._id)}
-                        disabled={!canExtend || isExtending}
-                        title={canExtend ? undefined : "Extension not possible for this loan"}
-                    >
-                        {isExtending ? "Extending..." : "Extend +7d"}
-                    </Button>
-                    <Button
-                        variant="success"
-                        size="sm"
-                        onClick={() => onReturn(loan._id)}
-                        disabled={isReturned || isReturning}
-                    >
-                        {isReturning ? "Returning..." : "Return book"}
-                    </Button>
-                </div>
+                {!readOnly && onReturn && onExtend && (
+                    <div className="mt-auto flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onExtend(loan._id)}
+                            disabled={!canExtend || isExtending}
+                            title={canExtend ? undefined : "Extension not possible for this loan"}
+                        >
+                            {isExtending ? "Extending..." : "Extend +7d"}
+                        </Button>
+                        <Button
+                            variant="success"
+                            size="sm"
+                            onClick={() => onReturn(loan._id)}
+                            disabled={isReturned || isReturning}
+                        >
+                            {isReturning ? "Returning..." : "Return book"}
+                        </Button>
+                    </div>
+                )}
             </CardContent>
         </Card>
     )

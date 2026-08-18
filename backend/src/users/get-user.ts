@@ -31,7 +31,7 @@ export const getUser = (appCtx: AppContext) => async (req: AuthenticatedRequest,
 const getUserById = async (appCtx: AppContext, userId: ObjectId) => {
   const user = await appCtx.dbCtx.users.findOne(
     { _id: userId },
-    { projection: { firstName: 1, lastName: 1, email: 1, role: 1 } }
+    { projection: { firstName: 1, lastName: 1, email: 1, role: 1, disabled: 1 } }
   )
   if (!user) {
     return null
@@ -42,6 +42,7 @@ const getUserById = async (appCtx: AppContext, userId: ObjectId) => {
     firstName: user.firstName,
     lastName: user.lastName,
     email: user.email,
-    role: user.role
+    role: user.role,
+    disabled: user.disabled ?? false,
   }
 }

@@ -1,4 +1,6 @@
 import React, { useEffect, useId, useState } from "react"
+import Link from "next/link"
+import { ArrowRightIcon } from "@heroicons/react/24/outline"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -53,35 +55,48 @@ const UserCard: React.FC<UserCardProps> = ({
                             <p className="truncate text-sm text-muted-foreground">{user.email}</p>
                         </div>
                     </div>
-                    <Badge variant={badgeVariant}>{user.role}</Badge>
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                        <Badge variant={badgeVariant}>{user.role}</Badge>
+                        {user.disabled && <Badge variant="secondary">disabled</Badge>}
+                    </div>
                 </div>
 
-                {canEditRole && onUpdateRole && (
-                    <div className="mt-auto border-t border-border pt-4">
-                        <label htmlFor={roleSelectId} className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                            Role
-                        </label>
-                        <div className="flex gap-2">
-                            <Select
-                                id={roleSelectId}
-                                value={nextRole}
-                                onChange={(event) => setNextRole(event.target.value as UserRole)}
-                                disabled={isUpdating}
-                            >
-                                <option value="user">user</option>
-                                <option value="librarian">librarian</option>
-                                <option value="admin">admin</option>
-                            </Select>
-                            <Button
-                                variant="outline"
-                                onClick={() => onUpdateRole(user._id, nextRole)}
-                                disabled={isUpdating || nextRole === user.role}
-                            >
-                                {isUpdating ? "Saving..." : "Save"}
-                            </Button>
+                <div className="mt-auto space-y-3 border-t border-border pt-4">
+                    {canEditRole && onUpdateRole && (
+                        <div>
+                            <label htmlFor={roleSelectId} className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                                Role
+                            </label>
+                            <div className="flex gap-2">
+                                <Select
+                                    id={roleSelectId}
+                                    value={nextRole}
+                                    onChange={(event) => setNextRole(event.target.value as UserRole)}
+                                    disabled={isUpdating}
+                                >
+                                    <option value="user">user</option>
+                                    <option value="librarian">librarian</option>
+                                    <option value="admin">admin</option>
+                                </Select>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => onUpdateRole(user._id, nextRole)}
+                                    disabled={isUpdating || nextRole === user.role}
+                                >
+                                    {isUpdating ? "Saving..." : "Save"}
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
+
+                    <Link
+                        href={`/users/${user._id}`}
+                        className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                    >
+                        Manage user
+                        <ArrowRightIcon aria-hidden="true" className="h-4 w-4" />
+                    </Link>
+                </div>
             </CardContent>
         </Card>
     )

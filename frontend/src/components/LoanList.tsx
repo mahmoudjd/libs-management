@@ -7,8 +7,9 @@ import { EmptyState } from "@/components/ui/empty-state"
 
 type LoanListProps = {
     loans: Loan[]
-    onReturn: (loanId: string) => void
-    onExtend: (loanId: string) => void
+    onReturn?: (loanId: string) => void
+    onExtend?: (loanId: string) => void
+    readOnly?: boolean
     isLoggedIn: boolean
     isStaff: boolean
     returningLoanId?: string
@@ -20,6 +21,7 @@ const LoanList: React.FC<LoanListProps> = ({
     loans,
     onReturn,
     onExtend,
+    readOnly = false,
     isLoggedIn,
     isStaff,
     returningLoanId,
@@ -52,6 +54,7 @@ const LoanList: React.FC<LoanListProps> = ({
                     loan={loan}
                     onReturn={onReturn}
                     onExtend={onExtend}
+                    readOnly={readOnly}
                     isStaff={isStaff}
                     isReturning={returningLoanId === loan._id}
                     isExtending={extendingLoanId === loan._id}

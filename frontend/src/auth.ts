@@ -77,7 +77,16 @@ const authOptions: NextAuthOptions = {
       // In a production app, you would implement proper user lookup/creation
       return true;
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger, session }) {
+      // Fired by useSession().update() after the user edits their own profile.
+      if (trigger === "update" && session) {
+        token.firstName = session.firstName ?? token.firstName
+        token.lastName = session.lastName ?? token.lastName
+        token.email = session.email ?? token.email
+        token.name = `${token.firstName ?? ""} ${token.lastName ?? ""}`.trim()
+        return token
+      }
+
       if (account?.provider === "google") {
         // For Google users, we need to set all the properties used in the session
         const fullName = user?.name || ""

@@ -7,6 +7,7 @@ import { parseObjectId } from "../lib/object-id"
 import { BookSchema } from "../types/types"
 import type { AuthenticatedRequest } from "../types/http"
 import { normalizeBookStock, toBookResponse } from "./book-stock"
+import { fulfillNextReservationIfPossible } from "../reservations/reservation-service"
 
 /**
   * Update book handler
@@ -95,6 +96,12 @@ export const updateBookHandler = (appCtx: AppContext) => async (req: Authenticat
       return res.status(404).json({ error: "Book not found" })
     }
 
+    // Restocking makes a copy available, so the oldest pending reservation is served.
+    const stockIncreased = normalizeBookStock(updatedBook).availableCopies > existingStock.availableCopies
+    const fulfilledReservation = stockIncreased
+      ? await fulfillNextReservationIfPossible(appCtx, parsedBookId, req.user)
+      : null
+
     await writeAuditLog(appCtx, {
       action: "book.updated",
       entityType: "book",
@@ -117,6 +124,7 @@ export const updateBookHandler = (appCtx: AppContext) => async (req: Authenticat
         activeLoanCount,
         maxAvailableCopies,
         availabilityAdjusted,
+        fulfilledReservationId: fulfilledReservation?.reservation?._id?.toHexString() ?? null,
       },
       actor: req.user,
     })

@@ -49,6 +49,22 @@ export const UserSchema = z.object({
   email: z.string().trim().email(),
   password: z.string().min(1),
   role: UserRoleSchema,
+  // Absent on accounts created before deactivation existed; absent means active.
+  disabled: z.boolean().optional(),
+})
+
+export const UpdateProfileSchema = z.object({
+  firstName: z.string().trim().min(1).optional(),
+  lastName: z.string().trim().min(1).optional(),
+  email: z.string().trim().email().optional(),
+})
+
+export const CreateUserSchema = z.object({
+  firstName: z.string().trim().min(1),
+  lastName: z.string().trim().min(1),
+  email: z.string().trim().email(),
+  password: z.string().min(8),
+  role: UserRoleSchema,
 })
 
 const UserDbSchema = DbBaseSchema.merge(UserSchema)
