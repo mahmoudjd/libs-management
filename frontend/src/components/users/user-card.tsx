@@ -3,17 +3,12 @@ import React, { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import type { ApiUser, UserRole } from "@/lib/types"
 
 type UserCardProps = {
-    user: {
-        _id: string
-        firstName: string
-        lastName: string
-        email: string
-        role: "admin" | "librarian" | "user"
-    }
+    user: ApiUser
     canEditRole?: boolean
-    onUpdateRole?: (userId: string, nextRole: "admin" | "librarian" | "user") => Promise<void>
+    onUpdateRole?: (userId: string, nextRole: UserRole) => Promise<void>
     isUpdating?: boolean
 }
 
@@ -52,7 +47,7 @@ const UserCard: React.FC<UserCardProps> = ({
                     <div className="mt-2 flex gap-2">
                         <select
                             value={nextRole}
-                            onChange={(event) => setNextRole(event.target.value as "admin" | "librarian" | "user")}
+                            onChange={(event) => setNextRole(event.target.value as UserRole)}
                             className="h-9 rounded-md border border-gray-300 px-3 text-sm"
                             disabled={isUpdating}
                         >

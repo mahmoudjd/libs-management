@@ -3,7 +3,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useSession } from "next-auth/react"
 
 import { apiClient } from "@/lib/apiClient"
-import type { ApiMessageResponse, Book, Loan } from "@/lib/types"
+import type {
+    Book,
+    CreateLoanResponse,
+    Loan,
+    LoanExtendResponse,
+    LoanReturnResponse,
+    OverdueRemindersResponse,
+} from "@/lib/types"
 
 const ALL_LOANS_QUERY_KEY = ["loans", "all"] as const
 const OVERDUE_LOANS_QUERY_KEY = ["loans", "overdue"] as const
@@ -76,7 +83,7 @@ export const useLoans = (books: Book[]) => {
                 throw new Error("Missing userId")
             }
 
-            const response = await apiClient.post<Loan>("/loans", {
+            const response = await apiClient.post<CreateLoanResponse>("/loans", {
                 bookId: data.bookId,
                 userId,
                 returnDate: data.returnDate.toISOString(),
@@ -94,7 +101,7 @@ export const useLoans = (books: Book[]) => {
 
     const returnBookMutation = useMutation({
         mutationFn: async ({ loanId }: { loanId: string }) => {
-            const response = await apiClient.put<ApiMessageResponse>(`/loans/${loanId}`, {})
+            const response = await apiClient.put<LoanReturnResponse>(`/loans/${loanId}`, {})
             return response.data
         },
         onSuccess: () => {
@@ -109,7 +116,7 @@ export const useLoans = (books: Book[]) => {
 
     const extendLoanMutation = useMutation({
         mutationFn: async ({ loanId, days }: { loanId: string; days?: number }) => {
-            const response = await apiClient.put<ApiMessageResponse>(`/loans/${loanId}/extend`, {
+            const response = await apiClient.put<LoanExtendResponse>(`/loans/${loanId}/extend`, {
                 days,
             })
             return response.data
@@ -125,7 +132,7 @@ export const useLoans = (books: Book[]) => {
 
     const prepareOverdueRemindersMutation = useMutation({
         mutationFn: async () => {
-            const response = await apiClient.post<{ message: string; count: number }>("/loans/overdue/reminders")
+            const response = await apiClient.post<OverdueRemindersResponse>("/loans/overdue/reminders")
             return response.data
         },
         onSuccess: () => {

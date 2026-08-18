@@ -9,19 +9,12 @@ import { PageLayout } from "@/components/page-layout"
 import { Button } from "@/components/ui/button"
 import { GridList } from "@/components/ui/grid-list"
 import { apiClient } from "@/lib/apiClient"
-
-type User = {
-    _id: string
-    firstName: string
-    lastName: string
-    email: string
-    role: "admin" | "librarian" | "user"
-}
+import type { ApiUser, UpdateUserRoleResponse, UserRole } from "@/lib/types"
 
 export default function UsersPage() {
     const { data: session } = useSession()
     const router = useRouter()
-    const [users, setUsers] = useState<User[]>([])
+    const [users, setUsers] = useState<ApiUser[]>([])
     const [loading, setLoading] = useState(true)
     const [updatingUserId, setUpdatingUserId] = useState<string | null>(null)
     const [exporting, setExporting] = useState(false)
@@ -30,7 +23,7 @@ export default function UsersPage() {
     const fetchUsers = async () => {
         try {
             setLoading(true)
-            const response = await apiClient.get<User[]>("/auth/users")
+            const response = await apiClient.get<ApiUser[]>("/auth/users")
             setUsers(response.data)
             setErrorMessage(null)
         } catch (error) {
@@ -52,10 +45,10 @@ export default function UsersPage() {
         fetchUsers()
     }, [session, router])
 
-    const handleUpdateRole = async (userId: string, role: "admin" | "librarian" | "user") => {
+    const handleUpdateRole = async (userId: string, role: UserRole) => {
         try {
             setUpdatingUserId(userId)
-            await apiClient.patch(`/auth/users/${userId}/role`, { role })
+            await apiClient.patch<UpdateUserRoleResponse>(`/auth/users/${userId}/role`, { role })
             await fetchUsers()
         } catch (error) {
             console.error("Failed to update user role", error)

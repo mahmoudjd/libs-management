@@ -20,10 +20,10 @@ export async function signupUser({
       password,
       firstName,
       lastName
-    });
-    return response.data;
+    })
+    return response.data
   } catch (error) {
-    console.error("Signup failed:", getApiErrorMessage(error, "Signup failed"));
-    return null;
+    console.error("Signup failed:", getApiErrorMessage(error, "Signup failed"))
+    return null
   }
 }

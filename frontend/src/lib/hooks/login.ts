@@ -8,11 +8,11 @@ export async function loginUser({ email, password }: { email: string; password: 
     const response = await axios.post<AuthResponse>(`${SERVER_API_BASE_URL}/auth/login`, {
       email,
       password
-    });
-    return response.data;
+    })
+    return response.data
   } catch (error) {
-    console.error("Login failed:", getApiErrorMessage(error, "Login failed"));
-    return null;
+    console.error("Login failed:", getApiErrorMessage(error, "Login failed"))
+    return null
   }
 }
 
@@ -23,11 +23,10 @@ export async function googleLogin({ email, firstName, lastName }: { email: strin
       email,
       firstName,
       lastName
-    });
-    return response.data;
+    })
+    return response.data
   } catch (error) {
-    console.error("Login failed:", getApiErrorMessage(error, "Google login failed"));
-    return null;
+    console.error("Login failed:", getApiErrorMessage(error, "Google login failed"))
+    return null
   }
 }
-
