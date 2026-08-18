@@ -1,133 +1,52 @@
-export type Book = {
-  _id: string;
-  title: string;
-  author: string;
-  genre: string;
-  totalCopies: number;
-  availableCopies: number;
-  available: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-};
+import type { components, paths } from "@/lib/generated/api-schema"
 
+type Schemas = components["schemas"]
 
-export type BookFormData = {
-  title: string;
-  author: string;
-  genre: string;
-  totalCopies?: number;
-  availableCopies?: number;
-  available?: boolean;
-};
+export type UserRole = Schemas["UserRole"]
 
-export type ApiMessageResponse = {
-  message: string;
-};
+export type ApiMessageResponse = Schemas["MessageResponse"]
+export type ApiErrorResponse = Schemas["ErrorResponse"]
+export type ValidationError = Schemas["ValidationError"]
 
-export type User = {
-  id: string;
-  name?: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  role?: "user" | "librarian" | "admin";
-  accessToken?: string;
-};
+export type Book = Schemas["Book"]
+export type BookFormData = paths["/books"]["post"]["requestBody"]["content"]["application/json"]
+export type PaginatedBooksResponse = Schemas["PaginatedBooks"]
+export type BookUpdateResponse = Schemas["BookUpdateResponse"]
+export type BookAvailabilityResponse = Schemas["BookAvailabilityResponse"]
 
-export type Loan = {
-  _id: string;
-  bookId: string;
-  userId: string;
-  loanDate: string;
-  returnDate: string;
-  returnedAt: string | null;
-  extensionCount: number;
-  source: "direct" | "reservation";
-  status: "active" | "overdue" | "returned";
-  overdue: boolean;
-  book?: Book | null;
-  user?: User | null;
-};
+export type AuthUser = Schemas["AuthenticatedUser"]
+export type AuthResponse = Schemas["AuthSuccessResponse"]
 
-export type AuthUser = {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: "admin" | "librarian" | "user";
-  accessToken: string;
-};
+export type ApiUser = Schemas["User"]
+export type UserProfile = Schemas["UserProfile"]
+export type UpdateUserRoleRequest = Schemas["UpdateUserRoleRequest"]
+export type UpdateUserRoleResponse = Schemas["RoleUpdatedResponse"] | Schemas["MessageResponse"]
 
-export type AuthResponse = ApiMessageResponse & {
-  user: AuthUser;
-};
+export type LoanUser = Schemas["LoanUserSummary"]
+export type LoanRecord = Schemas["Loan"]
+export type Loan = LoanRecord & {
+  book?: Book | null
+  user?: LoanUser | null
+}
+export type PaginatedLoansResponse = Schemas["PaginatedLoans"]
+export type PaginatedUserLoansResponse = Schemas["PaginatedUserLoans"]
+export type CreateLoanResponse = Schemas["Loan"]
+export type LoanReturnResponse = Schemas["LoanReturnResponse"]
+export type LoanExtendResponse = Schemas["LoanExtendResponse"]
+export type OverdueRemindersResponse = Schemas["OverdueRemindersResponse"]
 
-export type Reservation = {
-  _id: string;
-  bookId: string;
-  userId: string;
-  createdAt: string;
-  status: "pending" | "fulfilled" | "cancelled";
-  fulfilledAt: string | null;
-  cancelledAt: string | null;
-  book?: Book | null;
-  user?: User | null;
-};
+export type ReservationRecord = Schemas["Reservation"]
+export type Reservation = ReservationRecord & {
+  book?: Book | null
+  user?: LoanUser | null
+}
+export type EnrichedReservation = Schemas["EnrichedReservation"]
 
-export type DashboardKpis =
-  | {
-      role: "admin" | "librarian";
-      totalBooks: number;
-      availableBooks: number;
-      totalUsers: number;
-      activeLoans: number;
-      overdueLoans: number;
-      pendingReservations: number;
-      topGenres: Array<{ genre: string; count: number }>;
-    }
-  | {
-      role: "user";
-      totalBooks: number;
-      availableBooks: number;
-      myActiveLoans: number;
-      myOverdueLoans: number;
-      myPendingReservations: number;
-    };
+export type DashboardKpis = Schemas["DashboardStaffKpis"] | Schemas["DashboardUserKpis"]
+export type DashboardTrendRange = Exclude<
+  NonNullable<paths["/dashboard/loan-trends"]["get"]["parameters"]["query"]>["range"],
+  undefined
+>
+export type DashboardLoanTrends = Schemas["LoanTrendResponse"]
 
-export type DashboardTrendRange = "1m" | "3m" | "1y";
-
-export type DashboardLoanTrends = {
-  role: "admin" | "librarian" | "user";
-  scope: "all" | "mine";
-  range: DashboardTrendRange;
-  granularity: "day" | "month";
-  start: string;
-  end: string;
-  totals: {
-    loaned: number;
-    returned: number;
-    activeNow: number;
-    overdueNow: number;
-  };
-  points: Array<{
-    key: string;
-    label: string;
-    start: string;
-    end: string;
-    loanedCount: number;
-    returnedCount: number;
-    activeOpenCount: number;
-    overdueOpenCount: number;
-  }>;
-};
-
-export type AuditLog = {
-  _id: string;
-  actorUserId: string | null;
-  actorRole?: "admin" | "librarian" | "user";
-  action: string;
-  entityType: string;
-  entityId: string | null;
-  details: Record<string, unknown>;
-  createdAt: string;
-};
+export type AuditLog = Schemas["AuditLog"]

@@ -2,7 +2,7 @@ import { useMemo } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { apiClient } from "@/lib/apiClient"
-import type { ApiMessageResponse, Book, BookFormData } from "@/lib/types"
+import type { Book, BookFormData, BookUpdateResponse, PaginatedBooksResponse } from "@/lib/types"
 
 type SortBy = "title" | "author" | "genre" | "createdAt" | "availableCopies" | "totalCopies"
 type SortOrder = "asc" | "desc"
@@ -16,13 +16,6 @@ export interface BooksQueryParams {
     pageSize?: number
     sortBy?: SortBy
     order?: SortOrder
-}
-
-interface PaginatedBooksResponse {
-    items: Book[]
-    total: number
-    page: number
-    pageSize: number
 }
 
 const BOOKS_QUERY_ROOT = ["books"] as const
@@ -116,7 +109,7 @@ export const useBooks = (params?: BooksQueryParams) => {
 
     const editBookMutation = useMutation({
         mutationFn: async ({ id, data }: { id: string; data: BookFormData }) => {
-            const response = await apiClient.put<ApiMessageResponse>(`/books/${id}`, data)
+            const response = await apiClient.put<BookUpdateResponse>(`/books/${id}`, data)
             return response.data
         },
         onSuccess: () => {
