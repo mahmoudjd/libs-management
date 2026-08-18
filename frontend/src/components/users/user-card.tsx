@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useId, useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Select } from "@/components/ui/select"
 import type { ApiUser, UserRole } from "@/lib/types"
 
 type UserCardProps = {
@@ -19,6 +20,7 @@ const UserCard: React.FC<UserCardProps> = ({
     isUpdating = false,
 }) => {
     const [nextRole, setNextRole] = useState(user.role)
+    const roleSelectId = useId()
 
     useEffect(() => {
         setNextRole(user.role)
@@ -31,37 +33,53 @@ const UserCard: React.FC<UserCardProps> = ({
                 ? "warning"
                 : "secondary"
 
+    const initials = `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase()
+
     return (
-        <Card className="rounded-xl shadow-md hover:shadow-lg transition p-6">
-            <CardContent className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold">
-                        {user.firstName} {user.lastName}
-                    </h2>
-                    <Badge variant={badgeVariant}>
-                        {user.role}
-                    </Badge>
+        <Card className="h-full transition-shadow hover:shadow-md">
+            <CardContent className="flex h-full flex-col gap-4">
+                <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                        <span
+                            aria-hidden="true"
+                            className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary"
+                        >
+                            {initials || "?"}
+                        </span>
+                        <div className="min-w-0">
+                            <h2 className="truncate text-base font-semibold text-foreground">
+                                {user.firstName} {user.lastName}
+                            </h2>
+                            <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+                        </div>
+                    </div>
+                    <Badge variant={badgeVariant}>{user.role}</Badge>
                 </div>
-                <p className="text-gray-500 text-sm">{user.email}</p>
+
                 {canEditRole && onUpdateRole && (
-                    <div className="mt-2 flex gap-2">
-                        <select
-                            value={nextRole}
-                            onChange={(event) => setNextRole(event.target.value as UserRole)}
-                            className="h-9 rounded-md border border-gray-300 px-3 text-sm"
-                            disabled={isUpdating}
-                        >
-                            <option value="user">user</option>
-                            <option value="librarian">librarian</option>
-                            <option value="admin">admin</option>
-                        </select>
-                        <Button
-                            variant="outline"
-                            onClick={() => onUpdateRole(user._id, nextRole)}
-                            disabled={isUpdating || nextRole === user.role}
-                        >
-                            {isUpdating ? "Saving..." : "Update Role"}
-                        </Button>
+                    <div className="mt-auto border-t border-border pt-4">
+                        <label htmlFor={roleSelectId} className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                            Role
+                        </label>
+                        <div className="flex gap-2">
+                            <Select
+                                id={roleSelectId}
+                                value={nextRole}
+                                onChange={(event) => setNextRole(event.target.value as UserRole)}
+                                disabled={isUpdating}
+                            >
+                                <option value="user">user</option>
+                                <option value="librarian">librarian</option>
+                                <option value="admin">admin</option>
+                            </Select>
+                            <Button
+                                variant="outline"
+                                onClick={() => onUpdateRole(user._id, nextRole)}
+                                disabled={isUpdating || nextRole === user.role}
+                            >
+                                {isUpdating ? "Saving..." : "Save"}
+                            </Button>
+                        </div>
                     </div>
                 )}
             </CardContent>

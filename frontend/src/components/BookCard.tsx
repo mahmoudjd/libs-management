@@ -35,68 +35,96 @@ const BookCard: React.FC<BookCardProps> = ({
     isReserving = false,
     pendingReservationId,
 }) => {
-    return (
-        <Card className="flex flex-col justify-between h-full hover:shadow-md transition-shadow">
-            <CardContent className="flex flex-col justify-between h-full">
-                <div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-1">{book.title}</h3>
-                    <p className="text-gray-600 text-sm">Author: {book.author}</p>
-                    <p className="text-gray-600 text-sm">Genre: {book.genre}</p>
-                    <p className="text-gray-600 text-sm mb-4">Stock: {book.availableCopies}/{book.totalCopies}</p>
-                </div>
+    const stockRatio = book.totalCopies > 0 ? book.availableCopies / book.totalCopies : 0
 
-                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 justify-between items-center mt-auto">
+    return (
+        <Card className="flex h-full flex-col transition-shadow hover:shadow-md">
+            <CardContent className="flex h-full flex-col gap-4">
+                <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                        <h3 className="text-lg font-semibold leading-snug text-foreground">
+                            {book.title}
+                        </h3>
+                        <p className="mt-0.5 truncate text-sm text-muted-foreground">{book.author}</p>
+                    </div>
                     <Badge variant={book.available ? "success" : "destructive"}>
                         {book.available ? "Available" : "Borrowed"}
                     </Badge>
+                </div>
 
-                    <div className="flex space-x-2">
-                        {isStaff && (
-                            <>
-                                <Button
-                                    variant="outline"
-                                    className="w-9 h-9 p-0 rounded-full bg-yellow-100 hover:bg-yellow-200 border-none"
-                                    title="Edit Book"
-                                    onClick={() => onEdit(book)}
-                                    disabled={isEditing || isDeleting}
-                                >
-                                    <PencilIcon className="h-5 w-5 text-yellow-700" />
-                                </Button>
+                <div>
+                    <Badge variant="secondary">{book.genre}</Badge>
+                </div>
 
-                                <Button
-                                    variant="outline"
-                                    className="w-9 h-9 p-0 rounded-full bg-red-100 hover:bg-red-200 border-none"
-                                    title="Delete Book"
-                                    onClick={() => onDelete(book)}
-                                    disabled={isDeleting || isEditing}
-                                >
-                                    <TrashIcon className="h-5 w-5 text-red-700" />
-                                </Button>
-                            </>
-                        )}
-
-                        {book.available && userLoggedIn && (
-                            <Button
-                                variant="default"
-                                className="text-xs font-semibold rounded-full"
-                                onClick={() => onBorrow(book._id)}
-                                disabled={isBorrowing}
-                            >
-                                {isBorrowing ? "Borrowing..." : "Borrow"}
-                            </Button>
-                        )}
-
-                        {!book.available && userLoggedIn && !isStaff && (
-                            <Button
-                                variant="outline"
-                                className="text-xs font-semibold rounded-full"
-                                onClick={() => onReserve(book._id)}
-                                disabled={Boolean(pendingReservationId) || isReserving}
-                            >
-                                {pendingReservationId ? "Reserved" : (isReserving ? "Reserving..." : "Reserve")}
-                            </Button>
-                        )}
+                <div>
+                    <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground">
+                        <span>Copies in stock</span>
+                        <span className="font-semibold text-foreground">
+                            {book.availableCopies}/{book.totalCopies}
+                        </span>
                     </div>
+                    <div
+                        className="h-1.5 overflow-hidden rounded-full bg-surface-muted"
+                        role="progressbar"
+                        aria-label={`${book.availableCopies} of ${book.totalCopies} copies available`}
+                        aria-valuenow={book.availableCopies}
+                        aria-valuemin={0}
+                        aria-valuemax={book.totalCopies}
+                    >
+                        <div
+                            className="h-full rounded-full bg-success"
+                            style={{ width: stockRatio > 0 ? `${Math.max(stockRatio * 100, 6)}%` : "0%" }}
+                        />
+                    </div>
+                </div>
+
+                <div className="mt-auto flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
+                    {isStaff && (
+                        <>
+                            <Button
+                                variant="subtle"
+                                size="icon"
+                                aria-label={`Edit ${book.title}`}
+                                title="Edit book"
+                                onClick={() => onEdit(book)}
+                                disabled={isEditing || isDeleting}
+                            >
+                                <PencilIcon aria-hidden="true" className="h-4 w-4" />
+                            </Button>
+
+                            <Button
+                                variant="destructive"
+                                size="icon"
+                                aria-label={`Delete ${book.title}`}
+                                title="Delete book"
+                                onClick={() => onDelete(book)}
+                                disabled={isDeleting || isEditing}
+                            >
+                                <TrashIcon aria-hidden="true" className="h-4 w-4" />
+                            </Button>
+                        </>
+                    )}
+
+                    {book.available && userLoggedIn && (
+                        <Button
+                            size="sm"
+                            onClick={() => onBorrow(book._id)}
+                            disabled={isBorrowing}
+                        >
+                            {isBorrowing ? "Borrowing..." : "Borrow"}
+                        </Button>
+                    )}
+
+                    {!book.available && userLoggedIn && !isStaff && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onReserve(book._id)}
+                            disabled={Boolean(pendingReservationId) || isReserving}
+                        >
+                            {pendingReservationId ? "Reserved" : isReserving ? "Reserving..." : "Reserve"}
+                        </Button>
+                    )}
                 </div>
             </CardContent>
         </Card>

@@ -3,6 +3,7 @@ import React from "react"
 import BookCard from "./BookCard"
 import type { Book, Reservation } from "@/lib/types"
 import { GridList } from "@/components/ui/grid-list"
+import { EmptyState } from "@/components/ui/empty-state"
 
 type BookListProps = {
   books: Book[]
@@ -34,7 +35,12 @@ export const BookList: React.FC<BookListProps> = ({
   pendingReservationByBookId,
 }) => {
   if (books.length === 0) {
-    return <p className="col-span-3 text-center text-gray-500">No books found matching your search.</p>
+    return (
+      <EmptyState
+        title="No books found"
+        description="Try adjusting your search or filters."
+      />
+    )
   }
 
   return (

@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react"
-import * as Dialog from "@radix-ui/react-dialog"
 
 import { Book, BookFormData } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { DialogShell } from "@/components/ui/dialog"
+import { Field } from "@/components/ui/field"
 
 interface EditBookDialogProps {
+    error?: string | null
     open: boolean
     onOpenChange: (open: boolean) => void
     onSubmit: (data: BookFormData) => Promise<void>
@@ -13,7 +15,7 @@ interface EditBookDialogProps {
     isSubmitting?: boolean
 }
 
-const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onOpenChange, onSubmit, book, isSubmitting = false }) => {
+const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onOpenChange, onSubmit, book, isSubmitting = false, error }) => {
     const [title, setTitle] = useState(book?.title || "")
     const [author, setAuthor] = useState(book?.author || "")
     const [genre, setGenre] = useState(book?.genre || "")
@@ -51,7 +53,8 @@ const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onOpenChange, onS
         }
     }, [availableCopies, maxAvailableCopies])
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault()
         if (book) {
             await onSubmit({
                 title,
@@ -60,125 +63,112 @@ const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onOpenChange, onS
                 totalCopies,
                 availableCopies,
             })
-            onOpenChange(false)
         }
     }
 
     return (
-        <Dialog.Root open={open} onOpenChange={onOpenChange}>
-            <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-                <Dialog.Content
-                    className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg w-full max-w-md"
+        <DialogShell
+            open={open}
+            onOpenChange={onOpenChange}
+            title="Edit book"
+            error={error}
+            description={book ? `Update the details for "${book.title}".` : undefined}
+            footer={
+                <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+                        Cancel
+                    </Button>
+                    <Button type="submit" form="edit-book-form" disabled={isSubmitting}>
+                        {isSubmitting ? "Saving..." : "Save changes"}
+                    </Button>
+                </div>
+            }
+        >
+            <form id="edit-book-form" onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
+                <Field label="Book title" htmlFor="edit-book-title">
+                    <Input
+                        id="edit-book-title"
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="Enter book title"
+                        required
+                        disabled={isSubmitting}
+                    />
+                </Field>
+
+                <Field label="Author" htmlFor="edit-book-author">
+                    <Input
+                        id="edit-book-author"
+                        type="text"
+                        value={author}
+                        onChange={(e) => setAuthor(e.target.value)}
+                        placeholder="Enter author's name"
+                        required
+                        disabled={isSubmitting}
+                    />
+                </Field>
+
+                <Field label="Genre" htmlFor="edit-book-genre">
+                    <Input
+                        id="edit-book-genre"
+                        type="text"
+                        value={genre}
+                        onChange={(e) => setGenre(e.target.value)}
+                        placeholder="Enter genre"
+                        required
+                        disabled={isSubmitting}
+                    />
+                </Field>
+
+                <Field
+                    label="Total copies"
+                    htmlFor="edit-book-total-copies"
+                    hint={
+                        estimatedActiveLoans > 0
+                            ? `${estimatedActiveLoans} active loan(s) require at least ${minTotalCopies} total copies.`
+                            : undefined
+                    }
                 >
-                    <Dialog.Title className="text-lg font-semibold mb-4">Edit Book</Dialog.Title>
+                    <Input
+                        id="edit-book-total-copies"
+                        type="number"
+                        min={minTotalCopies}
+                        value={totalCopies}
+                        onChange={(e) => {
+                            const parsed = Number.parseInt(e.target.value, 10)
+                            const safeValue = Number.isFinite(parsed) && !Number.isNaN(parsed)
+                                ? Math.max(parsed, minTotalCopies)
+                                : minTotalCopies
+                            setTotalCopies(safeValue)
+                        }}
+                        disabled={isSubmitting}
+                    />
+                </Field>
 
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium mb-2" htmlFor="title">Book Title</label>
-                        <Input
-                            id="title"
-                            type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder="Enter book title"
-                            className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            disabled={isSubmitting}
-                        />
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium mb-2" htmlFor="author">Author</label>
-                        <Input
-                            id="author"
-                            type="text"
-                            value={author}
-                            onChange={(e) => setAuthor(e.target.value)}
-                            placeholder="Enter author's name"
-                            className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            disabled={isSubmitting}
-                        />
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium mb-2" htmlFor="genre">Genre</label>
-                        <Input
-                            id="genre"
-                            type="text"
-                            value={genre}
-                            onChange={(e) => setGenre(e.target.value)}
-                            placeholder="Enter genre"
-                            className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            disabled={isSubmitting}
-                        />
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium mb-2" htmlFor="totalCopies">Total Copies</label>
-                        <Input
-                            id="totalCopies"
-                            type="number"
-                            min={minTotalCopies}
-                            value={totalCopies}
-                            onChange={(e) => {
-                                const parsed = Number.parseInt(e.target.value, 10)
-                                const safeValue = Number.isFinite(parsed) && !Number.isNaN(parsed)
-                                    ? Math.max(parsed, minTotalCopies)
-                                    : minTotalCopies
-                                setTotalCopies(safeValue)
-                            }}
-                            className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            disabled={isSubmitting}
-                        />
-                        {estimatedActiveLoans > 0 && (
-                            <p className="mt-1 text-xs text-gray-500">
-                                {estimatedActiveLoans} active loans currently require at least {minTotalCopies} total copies.
-                            </p>
-                        )}
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium mb-2" htmlFor="availableCopies">Available Copies</label>
-                        <Input
-                            id="availableCopies"
-                            type="number"
-                            min={0}
-                            max={maxAvailableCopies}
-                            value={availableCopies}
-                            onChange={(e) => {
-                                const parsed = Number.parseInt(e.target.value, 10)
-                                const safeValue = Number.isFinite(parsed) && !Number.isNaN(parsed)
-                                    ? Math.max(0, Math.min(parsed, maxAvailableCopies))
-                                    : 0
-                                setAvailableCopies(safeValue)
-                            }}
-                            className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            disabled={isSubmitting}
-                        />
-                        <p className="mt-1 text-xs text-gray-500">
-                            Max available with current active loans: {maxAvailableCopies}
-                        </p>
-                    </div>
-
-                    <div className="flex justify-between gap-4">
-                        <Button
-                            onClick={handleSubmit}
-                            className="w-full bg-blue-500 text-white hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:outline-none py-3 rounded-md"
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? "Saving..." : "Save Changes"}
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={() => onOpenChange(false)}
-                            className="w-full py-3 rounded-md text-gray-700"
-                            disabled={isSubmitting}
-                        >
-                            Cancel
-                        </Button>
-                    </div>
-                </Dialog.Content>
-            </Dialog.Portal>
-        </Dialog.Root>
+                <Field
+                    label="Available copies"
+                    htmlFor="edit-book-available-copies"
+                    hint={`Max available with current active loans: ${maxAvailableCopies}`}
+                >
+                    <Input
+                        id="edit-book-available-copies"
+                        type="number"
+                        min={0}
+                        max={maxAvailableCopies}
+                        value={availableCopies}
+                        onChange={(e) => {
+                            const parsed = Number.parseInt(e.target.value, 10)
+                            const safeValue = Number.isFinite(parsed) && !Number.isNaN(parsed)
+                                ? Math.max(0, Math.min(parsed, maxAvailableCopies))
+                                : 0
+                            setAvailableCopies(safeValue)
+                        }}
+                        disabled={isSubmitting}
+                    />
+                </Field>
+            </form>
+        </DialogShell>
     )
 }
 

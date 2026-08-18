@@ -1,7 +1,8 @@
 "use client"
 
-import React, { useMemo, useState } from "react"
+import React, { useDeferredValue, useEffect, useMemo, useState } from "react"
 import { useSession } from "next-auth/react"
+import { MagnifyingGlassIcon, PlusIcon } from "@heroicons/react/24/outline"
 
 import AddBookForm from "@/components/AddBookForm"
 import BookList from "@/components/BookList"
@@ -9,9 +10,14 @@ import BorrowBookDialog from "@/components/borrow-book-dialog"
 import DeleteBookDialog from "@/components/DeleteBookDialog"
 import EditBookDialog from "@/components/edit-book-dialog"
 import { PageLayout } from "@/components/page-layout"
+import { Alert } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Pagination } from "@/components/ui/pagination"
+import { Select } from "@/components/ui/select"
+import { SkeletonCards } from "@/components/ui/skeleton"
 import { getApiErrorMessage } from "@/lib/api-error"
 import { useBooks } from "@/lib/hooks/useBooks"
 import { useLoans } from "@/lib/hooks/useLoans"
@@ -19,6 +25,8 @@ import { useReservations } from "@/lib/hooks/useReservations"
 import type { Book } from "@/lib/types"
 
 type BookSortBy = "createdAt" | "title" | "author" | "genre" | "availableCopies"
+
+const PAGE_SIZE = 12
 
 export default function BooksPage() {
   const { data: session } = useSession()
@@ -29,9 +37,13 @@ export default function BooksPage() {
   const [genreFilter, setGenreFilter] = useState("")
   const [availableOnly, setAvailableOnly] = useState(false)
   const [sortBy, setSortBy] = useState<BookSortBy>("createdAt")
+  const [page, setPage] = useState(1)
+  const deferredSearchQuery = useDeferredValue(searchQuery)
+  const deferredGenreFilter = useDeferredValue(genreFilter)
 
   const {
     books,
+    pagination,
     isLoading,
     addBook,
     deleteBook,
@@ -42,9 +54,12 @@ export default function BooksPage() {
     isEditingBook,
     editingBookId,
   } = useBooks({
-    q: searchQuery,
-    genre: genreFilter,
+    q: deferredSearchQuery,
+    genre: deferredGenreFilter,
     availableOnly,
+    paginated: true,
+    page,
+    pageSize: PAGE_SIZE,
     sortBy,
     order: sortBy === "createdAt" ? "desc" : "asc",
   })
@@ -68,6 +83,21 @@ export default function BooksPage() {
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [cancellingReservationId, setCancellingReservationId] = useState<string | null>(null)
   const [bookActionError, setBookActionError] = useState<string | null>(null)
+  const [dialogError, setDialogError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setPage(1)
+  }, [deferredSearchQuery, deferredGenreFilter, availableOnly, sortBy])
+
+  const hasActiveFilters =
+    searchQuery !== "" || genreFilter !== "" || availableOnly || sortBy !== "createdAt"
+
+  const clearFilters = () => {
+    setSearchQuery("")
+    setGenreFilter("")
+    setAvailableOnly(false)
+    setSortBy("createdAt")
+  }
 
   const pendingReservations = useMemo(
     () => myReservations.filter((reservation) => reservation.status === "pending"),
@@ -77,6 +107,7 @@ export default function BooksPage() {
     () => allReservations.filter((reservation) => reservation.status === "pending").length,
     [allReservations]
   )
+  const showReservationSummary = isStaff || Boolean(session?.user)
 
   const handleBorrow = async (bookId: string) => {
     const book = books.find((item) => item._id === bookId)
@@ -84,171 +115,253 @@ export default function BooksPage() {
       return
     }
 
+    setDialogError(null)
     setSelectedBook(book)
     setBorrowBookDialogOpen(true)
   }
 
   const handleEdit = async (book: Book) => {
+    setDialogError(null)
     setSelectedBook(book)
     setEditBookDialogOpen(true)
   }
 
   const handleDeleteClick = (book: Book) => {
+    setDialogError(null)
     setSelectedBook(book)
     setDeleteBookDialogOpen(true)
   }
 
   const handleDelete = async (bookId: string) => {
     try {
-      setBookActionError(null)
+      setDialogError(null)
       await deleteBook(bookId)
       setDeleteBookDialogOpen(false)
     } catch (error) {
-      setBookActionError(getApiErrorMessage(error, "Failed to delete book"))
+      setDialogError(getApiErrorMessage(error, "Failed to delete book"))
     }
   }
 
   const handleReserve = async (bookId: string) => {
-    await reserveBook(bookId)
+    try {
+      setBookActionError(null)
+      await reserveBook(bookId)
+    } catch (error) {
+      setBookActionError(getApiErrorMessage(error, "Failed to reserve book"))
+    }
   }
 
   const handleCancelReservation = async (reservationId: string) => {
     try {
+      setBookActionError(null)
       setCancellingReservationId(reservationId)
       await cancelReservation(reservationId)
+    } catch (error) {
+      setBookActionError(getApiErrorMessage(error, "Failed to cancel reservation"))
     } finally {
       setCancellingReservationId(null)
     }
   }
 
   return (
-    <PageLayout title="Books">
-      <div className="flex flex-col gap-4 mb-6">
-        <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
-            <Input
-              type="text"
-              placeholder="Search title, author or genre"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <Input
-              type="text"
-              placeholder="Filter by genre"
-              value={genreFilter}
-              onChange={(e) => setGenreFilter(e.target.value)}
-            />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as BookSortBy)}
-              className="h-10 rounded-md border border-gray-300 px-3 text-sm"
-            >
-              <option value="createdAt">Newest</option>
-              <option value="title">Title</option>
-              <option value="author">Author</option>
-              <option value="genre">Genre</option>
-              <option value="availableCopies">Available Copies</option>
-            </select>
-            <label className="inline-flex items-center gap-2 px-3 h-10 rounded-md border border-gray-300 text-sm">
-              <input
-                type="checkbox"
-                checked={availableOnly}
-                onChange={(e) => setAvailableOnly(e.target.checked)}
-              />
-              Available only
-            </label>
-          </div>
-          {isStaff && (
-            <Button className="min-w-40" onClick={() => setAddBookOpen(true)}>
-              Add New Book
-            </Button>
-          )}
-        </div>
-
-        {isStaff ? (
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <span>Pending reservations:</span>
-            <Badge variant={pendingReservationsCount > 0 ? "warning" : "secondary"}>
-              {pendingReservationsCount}
-            </Badge>
-          </div>
-        ) : (
-          session?.user && (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <span>My pending reservations:</span>
-              <Badge variant={pendingReservations.length > 0 ? "warning" : "secondary"}>
-                {pendingReservations.length}
-              </Badge>
+    <PageLayout
+      title="Books"
+      description="Search the catalogue, borrow available titles and reserve the ones that are out."
+      actions={
+        isStaff && (
+          <Button
+            onClick={() => {
+              setDialogError(null)
+              setAddBookOpen(true)
+            }}
+          >
+            <PlusIcon aria-hidden="true" className="h-4 w-4" />
+            Add new book
+          </Button>
+        )
+      }
+    >
+      <Card className="mb-6">
+        <CardContent className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <label htmlFor="book-search" className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                Search
+              </label>
+              <div className="relative">
+                <MagnifyingGlassIcon
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                />
+                <Input
+                  id="book-search"
+                  type="search"
+                  className="pl-9"
+                  placeholder="Title, author or genre"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
             </div>
-          )
-        )}
-      </div>
 
-      {isLoading ? (
-        <p>Loading books...</p>
-      ) : (
-        <BookList
-          books={books}
-          isStaff={isStaff}
-          onBorrow={handleBorrow}
-          onEdit={handleEdit}
-          onDelete={handleDeleteClick}
-          onReserve={handleReserve}
-          userLoggedIn={Boolean(session?.user)}
-          borrowingBookId={borrowingBookId}
-          deletingBookId={deletingBookId}
-          editingBookId={editingBookId}
-          reservingBookId={reservingBookId}
-          pendingReservationByBookId={pendingReservationByBookId}
-        />
-      )}
+            <div>
+              <label htmlFor="book-genre" className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                Genre
+              </label>
+              <Input
+                id="book-genre"
+                type="text"
+                placeholder="e.g. Fantasy"
+                value={genreFilter}
+                onChange={(e) => setGenreFilter(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="book-sort" className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                Sort by
+              </label>
+              <Select
+                id="book-sort"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as BookSortBy)}
+              >
+                <option value="createdAt">Newest</option>
+                <option value="title">Title</option>
+                <option value="author">Author</option>
+                <option value="genre">Genre</option>
+                <option value="availableCopies">Available copies</option>
+              </Select>
+            </div>
+
+            <div className="flex items-end">
+              <label className="inline-flex h-10 w-full cursor-pointer items-center gap-2 rounded-lg border border-border px-3 text-sm font-medium text-foreground">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 cursor-pointer accent-[var(--primary)]"
+                  checked={availableOnly}
+                  onChange={(e) => setAvailableOnly(e.target.checked)}
+                />
+                Available only
+              </label>
+            </div>
+          </div>
+
+          {(showReservationSummary || hasActiveFilters) && (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                {showReservationSummary && (
+                  <>
+                    <span>{isStaff ? "Pending reservations:" : "My pending reservations:"}</span>
+                    <Badge
+                      variant={
+                        (isStaff ? pendingReservationsCount : pendingReservations.length) > 0
+                          ? "warning"
+                          : "secondary"
+                      }
+                    >
+                      {isStaff ? pendingReservationsCount : pendingReservations.length}
+                    </Badge>
+                  </>
+                )}
+              </div>
+
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                  Clear filters
+                </Button>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {bookActionError && (
-        <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <Alert variant="error" className="mb-6">
           {bookActionError}
-        </div>
+        </Alert>
+      )}
+
+      {isLoading ? (
+        <SkeletonCards count={6} />
+      ) : (
+        <>
+          <BookList
+            books={books}
+            isStaff={isStaff}
+            onBorrow={handleBorrow}
+            onEdit={handleEdit}
+            onDelete={handleDeleteClick}
+            onReserve={handleReserve}
+            userLoggedIn={Boolean(session?.user)}
+            borrowingBookId={borrowingBookId}
+            deletingBookId={deletingBookId}
+            editingBookId={editingBookId}
+            reservingBookId={reservingBookId}
+            pendingReservationByBookId={pendingReservationByBookId}
+          />
+          {pagination && pagination.totalPages > 1 && (
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              shownCount={books.length}
+              itemLabel="books"
+              onPageChange={setPage}
+            />
+          )}
+        </>
       )}
 
       {!isStaff && pendingReservations.length > 0 && (
-        <div className="mt-8 rounded-lg border border-gray-200 bg-white p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">My Reservations</h2>
-          <ul className="space-y-2">
-            {pendingReservations.map((reservation) => (
-              <li
-                key={reservation._id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-md border border-gray-100 p-3"
-              >
-                <div>
-                  <p className="font-medium">{reservation.book?.title ?? reservation.bookId}</p>
-                  <p className="text-xs text-gray-500">
-                    reserved at {new Date(reservation.createdAt).toLocaleString()}
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={() => handleCancelReservation(reservation._id)}
-                  disabled={isCancellingReservation && cancellingReservationId === reservation._id}
-                >
-                  {isCancellingReservation && cancellingReservationId === reservation._id ? "Cancelling..." : "Cancel"}
-                </Button>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <Card className="mt-8">
+          <CardContent>
+            <h2 className="mb-3 text-lg font-semibold text-foreground">My reservations</h2>
+            <ul className="space-y-2">
+              {pendingReservations.map((reservation) => {
+                const isCancelling = isCancellingReservation && cancellingReservationId === reservation._id
+
+                return (
+                  <li
+                    key={reservation._id}
+                    className="flex flex-col justify-between gap-2 rounded-xl border border-border p-3 sm:flex-row sm:items-center"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-foreground">
+                        {reservation.book?.title ?? reservation.bookId}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Reserved at {new Date(reservation.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleCancelReservation(reservation._id)}
+                      disabled={isCancelling}
+                    >
+                      {isCancelling ? "Cancelling..." : "Cancel"}
+                    </Button>
+                  </li>
+                )
+              })}
+            </ul>
+          </CardContent>
+        </Card>
       )}
 
       <AddBookForm
         open={addBookOpen}
         onOpenChange={setAddBookOpen}
         isSubmitting={isAddingBook}
+        error={dialogError}
         onSubmit={async (data) => {
           try {
-            setBookActionError(null)
+            setDialogError(null)
             await addBook(data)
             setAddBookOpen(false)
           } catch (error) {
-            setBookActionError(getApiErrorMessage(error, "Failed to create book"))
-            throw error
+            setDialogError(getApiErrorMessage(error, "Failed to create book"))
           }
         }}
       />
@@ -256,17 +369,17 @@ export default function BooksPage() {
       <EditBookDialog
         open={editBookDialogOpen}
         onOpenChange={setEditBookDialogOpen}
+        error={dialogError}
         onSubmit={async (data) => {
           if (!selectedBook) {
             return
           }
           try {
-            setBookActionError(null)
+            setDialogError(null)
             await editBook({ id: selectedBook._id, data })
             setEditBookDialogOpen(false)
           } catch (error) {
-            setBookActionError(getApiErrorMessage(error, "Failed to update book"))
-            throw error
+            setDialogError(getApiErrorMessage(error, "Failed to update book"))
           }
         }}
         book={selectedBook}
@@ -278,8 +391,15 @@ export default function BooksPage() {
         onOpenChange={setBorrowBookDialogOpen}
         book={selectedBook}
         isSubmitting={isBorrowingBook}
+        error={dialogError}
         onSubmit={async (bookId, returnDate) => {
-          await borrowBook(bookId, returnDate)
+          try {
+            setDialogError(null)
+            await borrowBook(bookId, returnDate)
+            setBorrowBookDialogOpen(false)
+          } catch (error) {
+            setDialogError(getApiErrorMessage(error, "Failed to borrow book"))
+          }
         }}
       />
 
@@ -288,6 +408,7 @@ export default function BooksPage() {
         open={deleteBookDialogOpen}
         onOpenChange={setDeleteBookDialogOpen}
         onDelete={handleDelete}
+        error={dialogError}
         isDeleting={isDeletingBook}
       />
     </PageLayout>

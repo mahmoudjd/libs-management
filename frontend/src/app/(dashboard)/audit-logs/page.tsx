@@ -1,104 +1,144 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React, { useDeferredValue, useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 
 import { PageLayout } from "@/components/page-layout"
+import { Alert } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Input } from "@/components/ui/input"
-import { apiClient } from "@/lib/apiClient"
-import type { AuditLog } from "@/lib/types"
+import { Pagination } from "@/components/ui/pagination"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useAuditLogs } from "@/lib/hooks/useAuditLogs"
+
+const PAGE_SIZE = 25
 
 export default function AuditLogsPage() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
-  const [logs, setLogs] = useState<AuditLog[]>([])
+  const isAdmin = session?.user?.salesRole === "admin"
+
   const [actionFilter, setActionFilter] = useState("")
   const [entityTypeFilter, setEntityTypeFilter] = useState("")
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
 
-  const fetchLogs = async () => {
-    try {
-      setIsLoading(true)
-      const response = await apiClient.get<AuditLog[]>("/audit-logs", {
-        params: {
-          ...(actionFilter ? { action: actionFilter } : {}),
-          ...(entityTypeFilter ? { entityType: entityTypeFilter } : {}),
-        },
-      })
-      setLogs(response.data)
-      setError(null)
-    } catch (fetchError) {
-      console.error("Failed to load audit logs", fetchError)
-      setError("Failed to load audit logs")
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  // Deferred so typing does not fire a request per keystroke.
+  const deferredActionFilter = useDeferredValue(actionFilter)
+  const deferredEntityTypeFilter = useDeferredValue(entityTypeFilter)
+
+  const { logs, total, totalPages, isLoading, isFetching, error } = useAuditLogs(
+    {
+      action: deferredActionFilter,
+      entityType: deferredEntityTypeFilter,
+      page,
+      pageSize: PAGE_SIZE,
+    },
+    isAdmin
+  )
 
   useEffect(() => {
-    if (!session) {
+    setPage(1)
+  }, [deferredActionFilter, deferredEntityTypeFilter])
+
+  useEffect(() => {
+    if (status === "loading") {
       return
     }
-
-    if (session.user.salesRole !== "admin") {
+    if (!session || session.user.salesRole !== "admin") {
       router.push("/")
-      return
     }
+  }, [session, status, router])
 
-    fetchLogs()
-  }, [session, router])
+  if (!isAdmin) {
+    return null
+  }
 
   return (
-    <PageLayout title="Audit Logs">
-      <div className="mb-4 flex flex-col md:flex-row gap-2">
-        <Input
-          value={actionFilter}
-          onChange={(event) => setActionFilter(event.target.value)}
-          placeholder="Filter by action (e.g. loan.created)"
-        />
-        <Input
-          value={entityTypeFilter}
-          onChange={(event) => setEntityTypeFilter(event.target.value)}
-          placeholder="Filter by entity type (e.g. book)"
-        />
-        <Button variant="outline" onClick={fetchLogs} disabled={isLoading}>
-          {isLoading ? "Loading..." : "Apply Filters"}
-        </Button>
-      </div>
+    <PageLayout
+      title="Audit Logs"
+      description="Every change made to books, loans, reservations and users."
+    >
+      <Card className="mb-6">
+        <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div>
+            <label htmlFor="audit-action" className="mb-1.5 block text-xs font-medium text-muted-foreground">
+              Action
+            </label>
+            <Input
+              id="audit-action"
+              value={actionFilter}
+              onChange={(event) => setActionFilter(event.target.value)}
+              placeholder="e.g. loan.created"
+            />
+          </div>
+          <div>
+            <label htmlFor="audit-entity-type" className="mb-1.5 block text-xs font-medium text-muted-foreground">
+              Entity type
+            </label>
+            <Input
+              id="audit-entity-type"
+              value={entityTypeFilter}
+              onChange={(event) => setEntityTypeFilter(event.target.value)}
+              placeholder="e.g. book"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-      {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+      {error && (
+        <Alert variant="error" className="mb-6">
+          Failed to load audit logs.
+        </Alert>
+      )}
 
       {isLoading ? (
-        <p>Loading audit logs...</p>
-      ) : logs.length === 0 ? (
-        <p className="text-gray-500">No audit logs found.</p>
-      ) : (
         <div className="space-y-3">
-          {logs.map((log) => (
-            <div key={log._id} className="rounded-lg border border-gray-200 bg-white p-4">
-              <div className="mb-2 flex flex-wrap items-center gap-2">
-                <Badge variant="secondary">{log.action}</Badge>
-                <Badge variant="default">{log.entityType}</Badge>
-                <span className="text-xs text-gray-500">
-                  {new Date(log.createdAt).toLocaleString()}
-                </span>
-              </div>
-              <p className="text-sm text-gray-700">
-                actor: {log.actorUserId ?? "system"} ({log.actorRole ?? "unknown"})
-              </p>
-              {log.entityId && (
-                <p className="text-sm text-gray-700">entityId: {log.entityId}</p>
-              )}
-              <pre className="mt-2 rounded bg-gray-50 p-2 text-xs overflow-x-auto">
-                {JSON.stringify(log.details, null, 2)}
-              </pre>
-            </div>
+          {Array.from({ length: 5 }, (_, index) => (
+            <Skeleton key={index} className="h-28 w-full rounded-xl" />
           ))}
         </div>
+      ) : logs.length === 0 ? (
+        <EmptyState
+          title="No audit logs found"
+          description="Nothing matches these filters yet."
+        />
+      ) : (
+        <>
+          <div className={isFetching ? "space-y-3 opacity-60 transition-opacity" : "space-y-3"}>
+            {logs.map((log) => (
+              <div key={log._id} className="rounded-xl border border-border bg-surface p-4">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <Badge variant="default">{log.action}</Badge>
+                  <Badge variant="secondary">{log.entityType}</Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(log.createdAt).toLocaleString()}
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Actor: {log.actorUserId ?? "system"} ({log.actorRole ?? "unknown"})
+                  {log.entityId && ` · Entity: ${log.entityId}`}
+                </p>
+                <pre className="mt-2 overflow-x-auto rounded-lg bg-surface-muted p-2 font-mono text-xs text-muted-foreground">
+                  {JSON.stringify(log.details, null, 2)}
+                </pre>
+              </div>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              shownCount={logs.length}
+              itemLabel="log entries"
+              onPageChange={setPage}
+            />
+          )}
+        </>
       )}
     </PageLayout>
   )

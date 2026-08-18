@@ -3,15 +3,15 @@ import * as React from "react";
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
+const inputClassName =
+    "flex h-10 w-full rounded-lg border border-input bg-surface px-3 py-2 text-sm text-foreground transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50";
+
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
     ({ className, type, ...props }, ref) => {
         return (
             <input
                 type={type}
-                className={cn(
-                    "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-                    className
-                )}
+                className={cn(inputClassName, className)}
                 ref={ref}
                 {...props}
             />
@@ -20,4 +20,4 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 );
 Input.displayName = "Input";
 
-export { Input };
+export { Input, inputClassName };

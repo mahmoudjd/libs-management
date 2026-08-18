@@ -63,7 +63,7 @@ function StatsCard({
 }) {
   return (
     <div className={`rounded-lg border p-3 ${className}`}>
-      <p className="text-xs text-gray-600">{label}</p>
+      <p className="text-xs opacity-80">{label}</p>
       <p className="text-2xl font-semibold">{value}</p>
     </div>
   )
@@ -92,18 +92,18 @@ export const LoanTrendsChart: React.FC<LoanTrendsChartProps> = ({ trends }) => {
 
   if (chartData.length === 0) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white p-4">
-        <p className="text-sm text-gray-500">No loan trend data available for this period.</p>
+      <div className="rounded-xl border border-border bg-surface p-4">
+        <p className="text-sm text-muted-foreground">No loan trend data available for this period.</p>
       </div>
     )
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
+    <div className="rounded-xl border border-border bg-surface p-4 md:p-5">
       <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h4 className="text-base font-semibold text-gray-900">Loan Activity Trend</h4>
-          <p className="text-xs text-gray-500">
+          <h3 className="text-base font-semibold text-foreground">Loan Activity Trend</h3>
+          <p className="text-xs text-muted-foreground">
             {formatDateRange(trends.start, trends.end)} |{" "}
             {trends.granularity === "day" ? "Daily" : "Monthly"}
           </p>
@@ -115,27 +115,27 @@ export const LoanTrendsChart: React.FC<LoanTrendsChartProps> = ({ trends }) => {
         <StatsCard
           label="Loaned In Range"
           value={trends.totals.loaned}
-          className="border-blue-100 bg-blue-50 text-blue-700"
+          className="border-transparent bg-primary-soft text-primary"
         />
         <StatsCard
           label="Returned In Range"
           value={trends.totals.returned}
-          className="border-emerald-100 bg-emerald-50 text-emerald-700"
+          className="border-transparent bg-success-soft text-success"
         />
         <StatsCard
           label="Active Now"
           value={trends.totals.activeNow}
-          className="border-amber-100 bg-amber-50 text-amber-700"
+          className="border-transparent bg-warning-soft text-warning"
         />
         <StatsCard
           label="Overdue Now"
           value={trends.totals.overdueNow}
-          className="border-red-100 bg-red-50 text-red-700"
+          className="border-transparent bg-danger-soft text-danger"
         />
       </div>
 
       {!hasAnyData && (
-        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <div className="mb-4 rounded-lg border border-warning/30 bg-warning-soft px-3 py-2 text-sm text-warning">
           No loan activity in this range yet. Try 3M or 1Y.
         </div>
       )}
@@ -148,33 +148,33 @@ export const LoanTrendsChart: React.FC<LoanTrendsChartProps> = ({ trends }) => {
           >
             <defs>
               <linearGradient id="loanedArea" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#2563eb" stopOpacity={0.35} />
-                <stop offset="100%" stopColor="#2563eb" stopOpacity={0.05} />
+                <stop offset="0%" stopColor="var(--chart-loaned)" stopOpacity={0.35} />
+                <stop offset="100%" stopColor="var(--chart-loaned)" stopOpacity={0.05} />
               </linearGradient>
               <linearGradient id="returnedArea" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#10b981" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="#10b981" stopOpacity={0.05} />
+                <stop offset="0%" stopColor="var(--chart-returned)" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="var(--chart-returned)" stopOpacity={0.05} />
               </linearGradient>
               <linearGradient id="activeArea" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.28} />
-                <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.04} />
+                <stop offset="0%" stopColor="var(--chart-active)" stopOpacity={0.28} />
+                <stop offset="100%" stopColor="var(--chart-active)" stopOpacity={0.04} />
               </linearGradient>
               <linearGradient id="overdueArea" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ef4444" stopOpacity={0.28} />
-                <stop offset="100%" stopColor="#ef4444" stopOpacity={0.04} />
+                <stop offset="0%" stopColor="var(--chart-overdue)" stopOpacity={0.28} />
+                <stop offset="100%" stopColor="var(--chart-overdue)" stopOpacity={0.04} />
               </linearGradient>
             </defs>
 
-            <CartesianGrid strokeDasharray="4 4" stroke="#e5e7eb" />
+            <CartesianGrid strokeDasharray="4 4" stroke="var(--chart-grid)" />
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 11, fill: "#6b7280" }}
+              tick={{ fontSize: 11, fill: "var(--chart-axis)" }}
               axisLine={false}
               tickLine={false}
               interval={xAxisInterval}
             />
             <YAxis
-              tick={{ fontSize: 11, fill: "#6b7280" }}
+              tick={{ fontSize: 11, fill: "var(--chart-axis)" }}
               axisLine={false}
               tickLine={false}
               allowDecimals={false}
@@ -182,7 +182,9 @@ export const LoanTrendsChart: React.FC<LoanTrendsChartProps> = ({ trends }) => {
             <Tooltip
               contentStyle={{
                 borderRadius: "8px",
-                borderColor: "#e5e7eb",
+                borderColor: "var(--border)",
+                backgroundColor: "var(--surface)",
+                color: "var(--foreground)",
                 fontSize: "12px",
               }}
             />
@@ -192,7 +194,7 @@ export const LoanTrendsChart: React.FC<LoanTrendsChartProps> = ({ trends }) => {
               type="monotone"
               dataKey="loaned"
               name="Loaned"
-              stroke="#2563eb"
+              stroke="var(--chart-loaned)"
               fill="url(#loanedArea)"
               strokeWidth={2}
               dot={false}
@@ -203,7 +205,7 @@ export const LoanTrendsChart: React.FC<LoanTrendsChartProps> = ({ trends }) => {
               type="monotone"
               dataKey="returned"
               name="Returned"
-              stroke="#10b981"
+              stroke="var(--chart-returned)"
               fill="url(#returnedArea)"
               strokeWidth={2}
               dot={false}
@@ -214,7 +216,7 @@ export const LoanTrendsChart: React.FC<LoanTrendsChartProps> = ({ trends }) => {
               type="monotone"
               dataKey="active"
               name="Active"
-              stroke="#f59e0b"
+              stroke="var(--chart-active)"
               fill="url(#activeArea)"
               strokeWidth={2}
               dot={false}
@@ -225,7 +227,7 @@ export const LoanTrendsChart: React.FC<LoanTrendsChartProps> = ({ trends }) => {
               type="monotone"
               dataKey="overdue"
               name="Overdue"
-              stroke="#ef4444"
+              stroke="var(--chart-overdue)"
               fill="url(#overdueArea)"
               strokeWidth={2}
               dot={false}

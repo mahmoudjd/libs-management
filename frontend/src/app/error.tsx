@@ -1,22 +1,38 @@
 "use client"
 
-import {Card} from "@/components/ui/card";
-import {Text} from "@/components/ui/text";
-import {useEffect} from "react";
+import { useEffect } from "react"
+import { ArrowPathIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline"
+
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 
 export default function Error({error, reset}: {
     error: Error & { digest?: string }
     reset: () => void
 }) {
     useEffect(() => {
-        // Log the error to an error reporting service
         console.error(error)
     }, [error])
+
     return (
-        <div className="flex flex-col">
-            <Card>
-                <Text variant="title"> Oops!</Text>
-                <Text variant="subtitle">Something went wrong!</Text>
+        <div className="flex min-h-[60vh] items-center justify-center py-10">
+            <Card className="w-full max-w-md">
+                <CardContent className="text-center">
+                    <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-danger-soft text-danger">
+                        <ExclamationTriangleIcon aria-hidden="true" className="h-6 w-6"/>
+                    </span>
+                    <h1 className="mt-4 text-xl font-bold text-foreground">Something went wrong</h1>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        The page could not be loaded. Try again — if it keeps failing, contact an administrator.
+                    </p>
+                    {error.digest && (
+                        <p className="mt-2 font-mono text-xs text-muted-foreground">Ref: {error.digest}</p>
+                    )}
+                    <Button className="mt-6" onClick={reset}>
+                        <ArrowPathIcon aria-hidden="true" className="h-4 w-4"/>
+                        Try again
+                    </Button>
+                </CardContent>
             </Card>
         </div>
     )

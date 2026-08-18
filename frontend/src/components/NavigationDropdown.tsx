@@ -1,12 +1,20 @@
 "use client";
 
 import React from "react";
-import { signIn, signOut, useSession } from "next-auth/react";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
-import { ListBulletIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import type { NavigationItem } from "@/components/navigation/navigation-items";
+import { usePathname } from "next/navigation";
+import { signIn, signOut, useSession } from "next-auth/react";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@radix-ui/react-dropdown-menu";
+import { Bars3Icon } from "@heroicons/react/24/outline";
+
+import { Button } from "@/components/ui/button";
+import { isNavigationItemActive, type NavigationItem } from "@/components/navigation/navigation-items";
+import { cn } from "@/lib/utils";
 
 interface NavigationDropdownProps {
     items: NavigationItem[];
@@ -14,36 +22,61 @@ interface NavigationDropdownProps {
 
 export const NavigationDropdown: React.FC<NavigationDropdownProps> = ({ items }) => {
     const { data: session } = useSession();
+    const pathname = usePathname() ?? "";
 
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="flex lg:hidden">
-                    <ListBulletIcon className="h-6 w-6" />
+                <Button variant="ghost" size="icon" className="flex lg:hidden" aria-label="Open menu">
+                    <Bars3Icon aria-hidden="true" className="h-6 w-6" />
                 </Button>
             </DropdownMenuTrigger>
 
             <DropdownMenuContent
                 side="bottom"
                 align="end"
-                className="bg-white rounded-lg shadow-lg ring-1 ring-gray-900/10 w-56 p-3 space-y-2 mt-2">
+                sideOffset={8}
+                className="z-50 w-56 rounded-xl border border-border bg-surface p-2 shadow-lg"
+            >
+                {items.map((item) => {
+                    const isActive = isNavigationItemActive(pathname, item.href);
 
-                {items.map((item) => (
-                    <DropdownMenuItem asChild key={item.href}>
-                        <Link href={item.href} className="flex items-center gap-2 text-gray-800 hover:text-blue-600 hover:bg-blue-50 rounded-md px-2 py-1 transition duration-200 ease-in-out">
-                            <item.Icon className="h-5 w-5" />
-                            {item.label}
-                        </Link>
-                    </DropdownMenuItem>
-                ))}
+                    return (
+                        <DropdownMenuItem asChild key={item.href}>
+                            <Link
+                                href={item.href}
+                                aria-current={isActive ? "page" : undefined}
+                                className={cn(
+                                    "flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-sm outline-none transition-colors",
+                                    isActive
+                                        ? "bg-primary-soft text-primary"
+                                        : "text-foreground hover:bg-surface-muted"
+                                )}
+                            >
+                                <item.Icon aria-hidden="true" className="h-5 w-5" />
+                                {item.label}
+                            </Link>
+                        </DropdownMenuItem>
+                    );
+                })}
+
+                <div className="my-1 h-px bg-border" />
 
                 <DropdownMenuItem asChild>
                     {session ? (
-                        <Button variant="ghost" className="w-full justify-start text-gray-800 hover:bg-red-50 hover:text-red-600 transition duration-200 ease-in-out" onClick={() => signOut()}>
+                        <Button
+                            variant="ghost"
+                            className="w-full justify-start hover:bg-danger-soft hover:text-danger"
+                            onClick={() => signOut()}
+                        >
                             Logout
                         </Button>
                     ) : (
-                        <Button variant="ghost" className="w-full justify-start text-gray-800 hover:bg-green-50 hover:text-green-600 transition duration-200 ease-in-out" onClick={() => signIn()}>
+                        <Button
+                            variant="ghost"
+                            className="w-full justify-start hover:bg-primary-soft hover:text-primary"
+                            onClick={() => signIn()}
+                        >
                             Login
                         </Button>
                     )}

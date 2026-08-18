@@ -1,13 +1,17 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/solid"
+import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/outline"
+
+import { Alert } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { PasswordInput } from "@/components/ui/password-input"
-import {Card} from "@/components/ui/card";
-import {Button} from "@/components/ui/button";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -31,71 +35,90 @@ export default function LoginPage() {
         email,
         password,
         redirect: false,
-      });
+      })
 
       if (response?.error) {
-        setError("Falsche Anmeldedaten.");
+        setError("Falsche Anmeldedaten.")
       } else {
-        router.push("/dashboard");
+        router.push("/dashboard")
       }
-    } catch (err) {
-      setError("Fehler beim Login.");
+    } catch {
+      setError("Fehler beim Login.")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Card className="p-6 w-full max-w-md space-y-4">
-          <h2 className="text-2xl text-center text-black">Willkommen zurück</h2>
+    <div className="flex min-h-[80vh] items-center justify-center py-10">
+      <Card className="w-full max-w-md">
+        <CardContent className="space-y-5">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Willkommen zurück</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Melden Sie sich an, um Bücher auszuleihen und zu verwalten.
+            </p>
+          </div>
 
-          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+          {error && <Alert variant="error">{error}</Alert>}
 
-          <form onSubmit={handleLogin} className="flex flex-col space-y-4">
-            <Input
+          <form onSubmit={handleLogin} className="space-y-4">
+            <Field label="E-Mail" htmlFor="login-email">
+              <Input
+                id="login-email"
                 type="email"
-                placeholder="E-Mail"
+                autoComplete="email"
+                placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-            />
-            <PasswordInput
-                placeholder="Passwort"
+                required
+              />
+            </Field>
+
+            <Field label="Passwort" htmlFor="login-password">
+              <PasswordInput
+                id="login-password"
+                autoComplete="current-password"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-            />
+                required
+              />
+            </Field>
 
-            <Button
-                type="submit"
-                disabled={loading}
-                className="bg-blue-600 text-white flex h-12 items-center justify-center rounded gap-2 hover:bg-blue-500 transition disabled:opacity-50"
-            >
-              {loading ? (
-                  <ArrowRightOnRectangleIcon className="h-5 w-5 animate-spin" />
-              ) : (
-                  <ArrowRightOnRectangleIcon className="h-5 w-5" />
-              )}
-              Login
+            <Button type="submit" size="lg" className="w-full" disabled={loading}>
+              <ArrowRightOnRectangleIcon
+                aria-hidden="true"
+                className={loading ? "h-5 w-5 animate-spin" : "h-5 w-5"}
+              />
+              {loading ? "Anmelden..." : "Login"}
             </Button>
           </form>
 
-          <div className="my-4 text-center text-gray-500">Oder mit</div>
+          <div className="flex items-center gap-3">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">Oder mit</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
 
           <Button
-              disabled={loading}
-              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-              className="w-full bg-red-500 text-white flex justify-center items-center h-12 rounded hover:bg-red-600 transition"
+            variant="outline"
+            size="lg"
+            className="w-full"
+            disabled={loading}
+            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
           >
             Google Login
           </Button>
 
-          <p className="text-center text-sm text-gray-600 mt-4">
+          <p className="text-center text-sm text-muted-foreground">
             Noch kein Konto?{" "}
-            <a href="/signup" className="text-blue-600 hover:underline">
+            <Link href="/signup" className="font-semibold text-primary hover:underline">
               Registrieren
-            </a>
+            </Link>
           </p>
-        </Card>
-      </div>
-  );
+        </CardContent>
+      </Card>
+    </div>
+  )
 }
