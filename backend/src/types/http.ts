@@ -10,7 +10,10 @@ export interface AuthenticatedUser {
   role: UserRole
 }
 
-export type AuthenticatedRequest = Request & {
+// ponytail: pins req.params back to plain strings; @types/express-serve-static-core@5.1.3
+// widened ParamsDictionary to string | string[] for path-to-regexp v8 repeat-params,
+// which none of our routes use. Revisit if a route ever adds a :name+ / *wildcard param.
+export type AuthenticatedRequest = Request<Record<string, string>> & {
   user?: AuthenticatedUser
 }
 
