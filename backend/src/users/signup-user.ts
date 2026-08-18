@@ -31,7 +31,11 @@ export const signupUser = (appCtx: AppContext) => async (req: Request, res: Resp
     console.debug(
       `Invalid request body for method ${req.method} ${req.originalUrl} with error ${parseResult.error}`
     )
-    return res.status(400).json(parseResult.error)
+    return res.status(400).json({
+      name: parseResult.error.name,
+      message: parseResult.error.message,
+      issues: parseResult.error.issues,
+    })
   }
 
   const user = parseResult.data

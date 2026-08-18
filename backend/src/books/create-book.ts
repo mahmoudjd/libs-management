@@ -24,7 +24,11 @@ export const createBookHandler = (appCtx: AppContext) => async (req: Authenticat
       console.debug(
         `Invalid request body for method ${req.method} ${req.originalUrl} with error ${parseResult.error.toString()}`,
       )
-      return res.status(400).json(parseResult.error)
+      return res.status(400).json({
+        name: parseResult.error.name,
+        message: parseResult.error.message,
+        issues: parseResult.error.issues,
+      })
     }
 
     const parsedBook = parseResult.data

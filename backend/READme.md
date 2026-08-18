@@ -78,6 +78,11 @@ src/
 
 ## 📌 API-Endpunkte
 
+Die OpenAPI-Spezifikation ist im laufenden Backend unter folgenden Routen verfügbar:
+
+- `GET /api/openapi.json` – maschinenlesbare OpenAPI-3.1-Spezifikation
+- `GET /api/docs` – lokale HTML-Dokumentation, direkt aus der Spezifikation gerendert
+
 ### 🔑 **Authentifizierung**
 | Methode | Route       | Beschreibung |
 |---------|------------|--------------|
