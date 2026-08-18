@@ -1,13 +1,18 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { ArrowRightOnRectangleIcon, EnvelopeIcon, LockClosedIcon, UserIcon } from "@heroicons/react/24/solid"
+import { UserPlusIcon } from "@heroicons/react/24/outline"
+
 import { signupUser } from "@/lib/hooks/signup"
-import {Input} from "@/components/ui/input";
-import {Card} from "@/components/ui/card";
-import {PasswordInput} from "@/components/ui/password-input";
+import { Alert } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Field } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/ui/password-input"
 
 export default function SignupPage() {
   const [email, setEmail] = useState("")
@@ -29,124 +34,126 @@ export default function SignupPage() {
     }
 
     try {
-      const response = await signupUser({
-        email,
-        password,
-        firstName,
-        lastName
-      });
+      const response = await signupUser({ email, password, firstName, lastName })
 
       if (!response) {
-        setError("Fehler bei der Registrierung.");
+        setError("Fehler bei der Registrierung.")
       } else {
-        // Auto-login after successful signup
         const loginResponse = await signIn("credentials", {
           email,
           password,
           redirect: false,
-        });
+        })
 
         if (loginResponse?.error) {
-          setError("Registrierung erfolgreich, aber automatische Anmeldung fehlgeschlagen. Bitte melden Sie sich an.");
-          router.push("/login");
+          setError(
+            "Registrierung erfolgreich, aber automatische Anmeldung fehlgeschlagen. Bitte melden Sie sich an."
+          )
+          router.push("/login")
         } else {
-          router.push("/dashboard");
+          router.push("/dashboard")
         }
       }
-    } catch (err) {
-      setError("Fehler bei der Registrierung.");
+    } catch {
+      setError("Fehler bei der Registrierung.")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <Card className="w-full flex flex-col space-y-2 max-w-md shadow-xl p-6">
-        <h2 className="text-2xl text-center text-black">Konto erstellen</h2>
-
-        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-
-        <form onSubmit={handleSignup} className="flex flex-col space-y-4">
-          {/* First Name */}
-          <div className="relative">
-            <UserIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-            <Input
-                type="text"
-                placeholder="Vorname"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="pl-10"
-            />
+    <div className="flex min-h-[80vh] items-center justify-center py-10">
+      <Card className="w-full max-w-md">
+        <CardContent className="space-y-5">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Konto erstellen</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              In wenigen Sekunden Zugang zum gesamten Bestand.
+            </p>
           </div>
 
-          {/* Last Name */}
-          <div className="relative">
-            <UserIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-            <Input
-                type="text"
-                placeholder="Nachname"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="pl-10"
-            />
-          </div>
+          {error && <Alert variant="error">{error}</Alert>}
 
-          {/* Email */}
-          <div className="relative">
-            <EnvelopeIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-            <Input
+          <form onSubmit={handleSignup} className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="Vorname" htmlFor="signup-first-name">
+                <Input
+                  id="signup-first-name"
+                  type="text"
+                  autoComplete="given-name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                />
+              </Field>
+              <Field label="Nachname" htmlFor="signup-last-name">
+                <Input
+                  id="signup-last-name"
+                  type="text"
+                  autoComplete="family-name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                />
+              </Field>
+            </div>
+
+            <Field label="E-Mail" htmlFor="signup-email">
+              <Input
+                id="signup-email"
                 type="email"
-                placeholder="E-Mail"
+                autoComplete="email"
+                placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="pl-10"
-            />
-          </div>
+                required
+              />
+            </Field>
 
-          {/* Password */}
-          <div className="relative">
-            <LockClosedIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-            <PasswordInput
-                placeholder="Passwort"
+            <Field label="Passwort" htmlFor="signup-password" hint="Mindestens 8 Zeichen.">
+              <PasswordInput
+                id="signup-password"
+                autoComplete="new-password"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10"
-            />
+                required
+              />
+            </Field>
+
+            <Button type="submit" size="lg" className="w-full" disabled={loading}>
+              <UserPlusIcon
+                aria-hidden="true"
+                className={loading ? "h-5 w-5 animate-spin" : "h-5 w-5"}
+              />
+              {loading ? "Registrieren..." : "Registrieren"}
+            </Button>
+          </form>
+
+          <div className="flex items-center gap-3">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">Oder mit</span>
+            <span className="h-px flex-1 bg-border" />
           </div>
 
-          {/* Submit Button */}
-          <button
-              type="submit"
-              disabled={loading}
-              className="bg-blue-600 text-white flex h-12 items-center justify-center rounded gap-2 hover:cursor-pointer hover:bg-blue-500"
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-full"
+            disabled={loading}
+            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
           >
-            {loading ? (
-                <ArrowRightOnRectangleIcon className="h-5 w-5 animate-spin" />
-            ) : (
-                <ArrowRightOnRectangleIcon className="h-5 w-5" />
-            )}
-            Registrieren
-          </button>
-        </form>
+            Google Registrierung
+          </Button>
 
-        <div className="my-4 text-center text-gray-500">Oder mit</div>
-
-        <button
-          disabled={loading}
-          onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-          className="w-full bg-red-500 text-white flex justify-center items-center h-12 rounded hover:cursor-pointer hover:bg-red-600 disabled:opacity-50"
-        >
-          Google Registrierung
-        </button>
-
-        <p className="text-center text-sm text-gray-600 mt-4">
-          Bereits ein Konto?{" "}
-          <a href="/login" className="text-blue-600 hover:underline">
-            Anmelden
-          </a>
-        </p>
+          <p className="text-center text-sm text-muted-foreground">
+            Bereits ein Konto?{" "}
+            <Link href="/login" className="font-semibold text-primary hover:underline">
+              Anmelden
+            </Link>
+          </p>
+        </CardContent>
       </Card>
     </div>
-  );
+  )
 }

@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+
 import { Book } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import * as Dialog from "@radix-ui/react-dialog";
+import { DialogShell } from "@/components/ui/dialog";
+import { Field } from "@/components/ui/field";
 
 interface BorrowBookDialogProps {
+    error?: string | null
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSubmit: (bookId: string, returnDate: Date) => Promise<void>;
@@ -12,68 +15,99 @@ interface BorrowBookDialogProps {
     isSubmitting?: boolean;
 }
 
-const BorrowBookDialog: React.FC<BorrowBookDialogProps> = ({ open, onOpenChange, onSubmit, book, isSubmitting = false }) => {
-    const [returnDate, setReturnDate] = useState<string>('');  // Store returnDate as string
+const DEFAULT_LOAN_DAYS = 14;
 
-    const handleSubmit = async () => {
-        if (book && returnDate) {
-            const returnDateObj = new Date(returnDate); // Convert the returnDate to a Date object
-            await onSubmit(book._id, returnDateObj);  // Submit bookId and returnDate
-            onOpenChange(false);
+// Built from local fields — toISOString() would shift the day in UTC+13/+14.
+function toDateInputValue(date: Date) {
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function addDays(days: number) {
+    const date = new Date();
+    date.setHours(12, 0, 0, 0);
+    date.setDate(date.getDate() + days);
+    return date;
+}
+
+const BorrowBookDialog: React.FC<BorrowBookDialogProps> = ({ open, onOpenChange, onSubmit, book, isSubmitting = false, error }) => {
+    const minReturnDate = toDateInputValue(addDays(1));
+    const [returnDate, setReturnDate] = useState<string>(() => toDateInputValue(addDays(DEFAULT_LOAN_DAYS)));
+
+    // Each new borrow starts from the default loan period again.
+    useEffect(() => {
+        if (open) {
+            setReturnDate(toDateInputValue(addDays(DEFAULT_LOAN_DAYS)));
+        }
+    }, [open]);
+
+    const isReturnDateValid = returnDate >= minReturnDate;
+
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        if (book && isReturnDateValid) {
+            await onSubmit(book._id, new Date(`${returnDate}T12:00:00`));
         }
     };
 
     return (
-        <Dialog.Root open={open} onOpenChange={onOpenChange}>
-            <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-                <Dialog.Content
-                    className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-8 rounded-xl shadow-2xl w-full max-w-md overflow-hidden"
-                >
-                    <Dialog.Title className="text-2xl font-semibold mb-6 text-center text-gray-800">Borrow Book</Dialog.Title>
+        <DialogShell
+            open={open}
+            onOpenChange={onOpenChange}
+            title="Borrow book"
+            error={error}
+            description="Pick the date the book has to be back in the library."
+            footer={
+                <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+                        Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        form="borrow-book-form"
+                        disabled={isSubmitting || !isReturnDateValid}
+                    >
+                        {isSubmitting ? "Borrowing..." : "Borrow"}
+                    </Button>
+                </div>
+            }
+        >
+            {book && (
+                <form id="borrow-book-form" onSubmit={handleSubmit} className="space-y-4">
+                    <dl className="rounded-xl border border-border bg-surface-muted p-4 text-sm">
+                        <div className="flex justify-between gap-4">
+                            <dt className="text-muted-foreground">Title</dt>
+                            <dd className="text-right font-medium text-foreground">{book.title}</dd>
+                        </div>
+                        <div className="mt-2 flex justify-between gap-4">
+                            <dt className="text-muted-foreground">Author</dt>
+                            <dd className="text-right text-foreground">{book.author}</dd>
+                        </div>
+                        <div className="mt-2 flex justify-between gap-4">
+                            <dt className="text-muted-foreground">Genre</dt>
+                            <dd className="text-right text-foreground">{book.genre}</dd>
+                        </div>
+                    </dl>
 
-                    {book && (
-                        <>
-                            <div className="mb-6">
-                                <p className="font-medium text-lg text-gray-700 mb-1">Book Information</p>
-                                <p className="text-gray-600"><strong>Title:</strong> {book.title}</p>
-                                <p className="text-gray-600"><strong>Author:</strong> {book.author}</p>
-                                <p className="text-gray-600"><strong>Genre:</strong> {book.genre}</p>
-                            </div>
-
-                            <div className="mb-6">
-                                <label htmlFor="returnDate" className="block text-sm font-medium text-gray-600 mb-2">Return Date</label>
-                                <Input
-                                    id="returnDate"
-                                    type="date"
-                                    value={returnDate}
-                                    onChange={(e) => setReturnDate(e.target.value)}
-                                    className="w-full p-4 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
-                                />
-                            </div>
-
-                            <div className="flex gap-4">
-                                <Button
-                                    onClick={handleSubmit}
-                                    className="w-full bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none py-3 rounded-lg transition duration-300 ease-in-out"
-                                    disabled={isSubmitting || !returnDate}
-                                >
-                                    {isSubmitting ? "Borrowing..." : "Borrow"}
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => onOpenChange(false)}
-                                    className="w-full border-gray-300 text-gray-700 hover:bg-gray-100 focus:outline-none py-3 rounded-lg transition duration-300 ease-in-out"
-                                    disabled={isSubmitting}
-                                >
-                                    Cancel
-                                </Button>
-                            </div>
-                        </>
-                    )}
-                </Dialog.Content>
-            </Dialog.Portal>
-        </Dialog.Root>
+                    <Field
+                        label="Return date"
+                        htmlFor="borrow-return-date"
+                        hint={isReturnDateValid ? undefined : "The return date must be in the future."}
+                    >
+                        <Input
+                            id="borrow-return-date"
+                            type="date"
+                            min={minReturnDate}
+                            value={returnDate}
+                            onChange={(e) => setReturnDate(e.target.value)}
+                            required
+                            disabled={isSubmitting}
+                        />
+                    </Field>
+                </form>
+            )}
+        </DialogShell>
     );
 };
 

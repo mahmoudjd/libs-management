@@ -1,6 +1,7 @@
 import type { ComponentType, SVGProps } from "react"
 import {
   BookOpenIcon,
+  BookmarkIcon,
   ClipboardDocumentListIcon,
   HomeIcon,
   ShieldCheckIcon,
@@ -14,6 +15,7 @@ export type NavigationItem = {
   label: string
   Icon: IconComponent
   requiresSession?: boolean
+  staffOnly?: boolean
   adminOnly?: boolean
 }
 
@@ -30,6 +32,7 @@ const baseItems: NavigationItem[] = [
 
 const protectedItems: NavigationItem[] = [
   { href: "/loans", label: "Loans", Icon: ClipboardDocumentListIcon, requiresSession: true },
+  { href: "/reservations", label: "Reservations", Icon: BookmarkIcon, staffOnly: true },
   { href: "/users", label: "Users", Icon: UsersIcon, adminOnly: true },
   { href: "/audit-logs", label: "Audit", Icon: ShieldCheckIcon, adminOnly: true },
 ]
@@ -57,10 +60,19 @@ export function getNavigationItems({
       return false
     }
 
+    if (item.staffOnly && !isStaff) {
+      return false
+    }
+
     if (item.adminOnly && !isAdmin) {
       return false
     }
 
     return true
   })
+}
+
+/** Marks /books active on /books/anything, but never matches /books from /bookshelf. */
+export function isNavigationItemActive(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`)
 }

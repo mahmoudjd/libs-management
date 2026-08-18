@@ -24,7 +24,7 @@ export const useReservations = () => {
     staleTime: 30_000,
   })
 
-  const { data: allReservations = [] } = useQuery<Reservation[]>({
+  const { data: allReservations = [], isLoading: isLoadingAllReservations } = useQuery<Reservation[]>({
     queryKey: ALL_RESERVATIONS_QUERY_KEY,
     enabled: isStaff,
     queryFn: async () => {
@@ -70,6 +70,7 @@ export const useReservations = () => {
   return {
     myReservations,
     allReservations,
+    isLoadingAllReservations,
     reserveBook: reserveMutation.mutateAsync,
     cancelReservation: cancelReservationMutation.mutateAsync,
     isReserving: reserveMutation.isPending,

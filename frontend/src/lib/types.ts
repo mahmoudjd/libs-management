@@ -50,3 +50,4 @@ export type DashboardTrendRange = Exclude<
 export type DashboardLoanTrends = Schemas["LoanTrendResponse"]
 
 export type AuditLog = Schemas["AuditLog"]
+export type PaginatedAuditLogsResponse = Schemas["PaginatedAuditLogs"]

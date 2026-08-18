@@ -1,11 +1,13 @@
-import React, { useState } from "react"
-import * as Dialog from "@radix-ui/react-dialog"
+import React, { useEffect, useState } from "react"
 
 import { BookFormData } from "@/lib/types"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { DialogShell } from "@/components/ui/dialog"
+import { Field } from "@/components/ui/field"
 
 type AddBookFormProps = {
+    error?: string | null
     onSubmit: (bookData: BookFormData) => Promise<void>
     open: boolean
     onOpenChange: (open: boolean) => void
@@ -20,7 +22,7 @@ const EMPTY_BOOK_FORM: BookFormData = {
     availableCopies: 1,
 }
 
-const AddBookForm: React.FC<AddBookFormProps> = ({ onSubmit, open, onOpenChange, isSubmitting = false }) => {
+const AddBookForm: React.FC<AddBookFormProps> = ({ onSubmit, open, onOpenChange, isSubmitting = false, error }) => {
     const [bookData, setBookData] = useState<BookFormData>(EMPTY_BOOK_FORM)
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,111 +56,103 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSubmit, open, onOpenChange,
         setBookData((prev) => ({ ...prev, [name]: value }))
     }
 
+    // Reset on open, so a failed submit keeps what the user typed.
+    useEffect(() => {
+        if (open) {
+            setBookData(EMPTY_BOOK_FORM)
+        }
+    }, [open])
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         await onSubmit(bookData)
-        setBookData(EMPTY_BOOK_FORM)
     }
 
     return (
-        <Dialog.Root open={open} onOpenChange={onOpenChange}>
-            <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-                <Dialog.Content
-                    className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg w-full max-w-md"
-                >
-                    <Dialog.Title className="text-lg font-semibold mb-4">Add New Book</Dialog.Title>
-                    <form onSubmit={handleSubmit}>
-                        <div className="grid grid-cols-1 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Title</label>
-                                <Input
-                                    type="text"
-                                    name="title"
-                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                                    value={bookData.title}
-                                    onChange={handleChange}
-                                    required
-                                    disabled={isSubmitting}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Author</label>
-                                <Input
-                                    type="text"
-                                    name="author"
-                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                                    value={bookData.author}
-                                    onChange={handleChange}
-                                    required
-                                    disabled={isSubmitting}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Genre</label>
-                                <Input
-                                    type="text"
-                                    name="genre"
-                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                                    value={bookData.genre}
-                                    onChange={handleChange}
-                                    required
-                                    disabled={isSubmitting}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Total Copies</label>
-                                <Input
-                                    type="number"
-                                    min={1}
-                                    name="totalCopies"
-                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                                    value={bookData.totalCopies ?? ""}
-                                    onChange={handleChange}
-                                    required
-                                    disabled={isSubmitting}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Available Copies</label>
-                                <Input
-                                    type="number"
-                                    min={0}
-                                    max={bookData.totalCopies ?? undefined}
-                                    name="availableCopies"
-                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                                    value={bookData.availableCopies ?? ""}
-                                    onChange={handleChange}
-                                    required
-                                    disabled={isSubmitting}
-                                />
-                            </div>
-                        </div>
-                        <div className="mt-4 flex justify-between space-x-2">
-                            <Button
-                                variant="default"
-                                type="submit"
-                                className="w-full"
-                                disabled={isSubmitting}
-                            >
-                                {isSubmitting ? "Saving..." : "Save Book"}
-                            </Button>
-                            <Dialog.Close asChild>
-                                <Button
-                                    variant="outline"
-                                    type="button"
-                                    className="w-full"
-                                    disabled={isSubmitting}
-                                >
-                                    Cancel
-                                </Button>
-                            </Dialog.Close>
-
-                        </div>
-                    </form>
-                </Dialog.Content>
-            </Dialog.Portal>
-        </Dialog.Root>
+        <DialogShell
+            open={open}
+            onOpenChange={onOpenChange}
+            title="Add new book"
+            error={error}
+            description="Create a new title and set how many copies the library owns."
+            footer={
+                <div className="flex justify-end gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => onOpenChange(false)}
+                        disabled={isSubmitting}
+                    >
+                        Cancel
+                    </Button>
+                    <Button type="submit" form="add-book-form" disabled={isSubmitting}>
+                        {isSubmitting ? "Saving..." : "Save book"}
+                    </Button>
+                </div>
+            }
+        >
+            <form id="add-book-form" onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
+                <Field label="Title" htmlFor="add-book-title">
+                    <Input
+                        id="add-book-title"
+                        type="text"
+                        name="title"
+                        value={bookData.title}
+                        onChange={handleChange}
+                        required
+                        disabled={isSubmitting}
+                    />
+                </Field>
+                <Field label="Author" htmlFor="add-book-author">
+                    <Input
+                        id="add-book-author"
+                        type="text"
+                        name="author"
+                        value={bookData.author}
+                        onChange={handleChange}
+                        required
+                        disabled={isSubmitting}
+                    />
+                </Field>
+                <Field label="Genre" htmlFor="add-book-genre">
+                    <Input
+                        id="add-book-genre"
+                        type="text"
+                        name="genre"
+                        value={bookData.genre}
+                        onChange={handleChange}
+                        required
+                        disabled={isSubmitting}
+                    />
+                </Field>
+                <div className="grid grid-cols-2 gap-4">
+                    <Field label="Total copies" htmlFor="add-book-total-copies">
+                        <Input
+                            id="add-book-total-copies"
+                            type="number"
+                            min={1}
+                            name="totalCopies"
+                            value={bookData.totalCopies ?? ""}
+                            onChange={handleChange}
+                            required
+                            disabled={isSubmitting}
+                        />
+                    </Field>
+                    <Field label="Available copies" htmlFor="add-book-available-copies">
+                        <Input
+                            id="add-book-available-copies"
+                            type="number"
+                            min={0}
+                            max={bookData.totalCopies ?? undefined}
+                            name="availableCopies"
+                            value={bookData.availableCopies ?? ""}
+                            onChange={handleChange}
+                            required
+                            disabled={isSubmitting}
+                        />
+                    </Field>
+                </div>
+            </form>
+        </DialogShell>
     )
 }
 

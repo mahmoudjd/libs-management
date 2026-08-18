@@ -1,26 +1,139 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+
+  --background: #f4f6fb;
+  --surface: #ffffff;
+  --surface-muted: #f8fafc;
+  --foreground: #0f172a;
+  --muted-foreground: #56637a;
+
+  --border: #e2e8f0;
+  --input: #cbd5e1;
+  --ring: #2563eb;
+
+  --primary: #1d4ed8;
+  --primary-foreground: #ffffff;
+  --primary-soft: #eff6ff;
+
+  --success: #15803d;
+  --success-soft: #dcfce7;
+  --warning: #92610a;
+  --warning-soft: #fef3c7;
+  --danger: #b91c1c;
+  --danger-soft: #fee2e2;
+
+  --chart-loaned: #2563eb;
+  --chart-returned: #059669;
+  --chart-active: #d97706;
+  --chart-overdue: #dc2626;
+  --chart-grid: #e2e8f0;
+  --chart-axis: #64748b;
+}
+
+.dark {
+  color-scheme: dark;
+
+  --background: #0a0f1a;
+  --surface: #121a29;
+  --surface-muted: #182131;
+  --foreground: #e8edf5;
+  --muted-foreground: #9aa8bd;
+
+  --border: #263144;
+  --input: #384861;
+  --ring: #60a5fa;
+
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --primary-soft: #16274a;
+
+  --success: #4ade80;
+  --success-soft: #0e3320;
+  --warning: #fbbf24;
+  --warning-soft: #3a2c08;
+  --danger: #f87171;
+  --danger-soft: #3d1618;
+
+  --chart-loaned: #60a5fa;
+  --chart-returned: #34d399;
+  --chart-active: #fbbf24;
+  --chart-overdue: #f87171;
+  --chart-grid: #263144;
+  --chart-axis: #9aa8bd;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
   --color-foreground: var(--foreground);
-  --font-sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
 }
 
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+
+  ::selection {
+    background: var(--primary-soft);
+    color: var(--foreground);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
 }
 
+/* iOS zooms in on focus when the font is below 16px. */
 @media screen and (max-width: 768px) {
-  input, textarea, select {
+  input,
+  textarea,
+  select {
     font-size: 16px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

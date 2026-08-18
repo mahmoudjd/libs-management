@@ -3,6 +3,7 @@ import React from "react"
 import LoanCard from "./LoanCard"
 import type { Loan } from "@/lib/types"
 import { GridList } from "@/components/ui/grid-list"
+import { EmptyState } from "@/components/ui/empty-state"
 
 type LoanListProps = {
     loans: Loan[]
@@ -26,11 +27,21 @@ const LoanList: React.FC<LoanListProps> = ({
     emptyStateText,
 }) => {
     if (!isLoggedIn) {
-        return <p className="text-center text-gray-500">Please log in to view your loans.</p>
+        return (
+            <EmptyState
+                title="You are not signed in"
+                description="Log in to see the books you have borrowed."
+            />
+        )
     }
 
     if (loans.length === 0) {
-        return <p className="text-center text-gray-500">{emptyStateText ?? "No loans found."}</p>
+        return (
+            <EmptyState
+                title="No loans found"
+                description={emptyStateText ?? "Nothing matches this filter yet."}
+            />
+        )
     }
 
     return (

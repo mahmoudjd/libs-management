@@ -1,10 +1,11 @@
 import React from 'react';
-import * as Dialog from '@radix-ui/react-dialog';
+
 import { Book } from '@/lib/types';
-import {Text} from "@/components/ui/text";
-import {Button} from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import { DialogShell } from "@/components/ui/dialog";
 
 type DeleteBookDialogProps = {
+    error?: string | null
   book: Book | null;
   onDelete: (bookId: string) => Promise<void>;
   open: boolean;
@@ -18,45 +19,37 @@ const DeleteBookDialog: React.FC<DeleteBookDialogProps> = ({
   open,
   onOpenChange,
   isDeleting = false,
+  error,
 }) => {
   const handleDelete = async () => {
     if (book) {
       await onDelete(book._id);
-      onOpenChange(false);
     }
   };
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-          <Dialog.Title className="text-lg font-semibold mb-4">Delete Book</Dialog.Title>
-          <Text className="mb-4">
-            Are you sure you want to delete "{book?.title}"? This action cannot be undone.
-          </Text>
-          <div className="flex justify-end">
-            <Button
-                variant="outline"
-              type="button"
-              className="mr-2 px-4 py-2 border border-gray-300 rounded-md text-gray-700"
-              onClick={() => onOpenChange(false)}
-              disabled={isDeleting}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md"
-              onClick={handleDelete}
-              disabled={isDeleting}
-            >
-              {isDeleting ? "Deleting..." : "Delete"}
-            </Button>
-          </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+    <DialogShell
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Delete book"
+            error={error}
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isDeleting}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+            {isDeleting ? "Deleting..." : "Delete book"}
+          </Button>
+        </div>
+      }
+    >
+      <p className="text-sm text-muted-foreground">
+        Are you sure you want to delete{" "}
+        <span className="font-semibold text-foreground">{book?.title}</span>? This action cannot be
+        undone.
+      </p>
+    </DialogShell>
   );
 };
 

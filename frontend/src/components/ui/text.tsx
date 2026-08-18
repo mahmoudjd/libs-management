@@ -2,15 +2,15 @@ import React from 'react';
 import {cva, VariantProps} from 'class-variance-authority';
 import {cn} from "@/lib/utils";
 
-const textVariants = cva("text-gray-800", {
+const textVariants = cva("text-foreground", {
     variants: {
         variant: {
             default: "text-base",
-            muted: "text-gray-500 text-sm",
-            title: "text-xl font-bold",
+            muted: "text-muted-foreground text-sm",
+            title: "text-xl font-bold tracking-tight",
             subtitle: "text-lg font-semibold",
             small: "text-xs",
-            error: "text-red-500 font-semibold",
+            error: "text-danger font-semibold",
         },
     },
     defaultVariants: {
