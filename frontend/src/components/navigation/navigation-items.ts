@@ -5,6 +5,7 @@ import {
   ClipboardDocumentListIcon,
   HomeIcon,
   ShieldCheckIcon,
+  UserCircleIcon,
   UsersIcon,
 } from "@heroicons/react/24/outline"
 
@@ -35,6 +36,7 @@ const protectedItems: NavigationItem[] = [
   { href: "/reservations", label: "Reservations", Icon: BookmarkIcon, staffOnly: true },
   { href: "/users", label: "Users", Icon: UsersIcon, adminOnly: true },
   { href: "/audit-logs", label: "Audit", Icon: ShieldCheckIcon, adminOnly: true },
+  { href: "/profile", label: "Profile", Icon: UserCircleIcon, requiresSession: true },
 ]
 
 export function getNavigationItems({

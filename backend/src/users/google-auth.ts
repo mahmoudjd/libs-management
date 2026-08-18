@@ -37,6 +37,10 @@ export const googleAuth = (appCtx: AppContext) => async (req: Request, res: Resp
     return res.status(500).json({ message: "User creation failed." });
   }
 
+  if (user.disabled) {
+    return res.status(403).json({ message: "This account has been disabled." });
+  }
+
   // Generate JWT token
   const token = jwt.sign(
     { 

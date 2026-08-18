@@ -24,6 +24,11 @@ export const loginUser = (appCtx: AppContext) => async (req: Request, res: Respo
     return res.status(401).json({ message: "Invalid login credentials." });
   }
 
+  // Checked after the password so a wrong password cannot reveal that an account exists.
+  if (user.disabled) {
+    return res.status(403).json({ message: "This account has been disabled." });
+  }
+
   // Generate JWT token
   const token = jwt.sign(
     {

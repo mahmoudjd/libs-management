@@ -222,6 +222,41 @@ export function createOpenApiDocument(ctx: AppContext) {
           },
         },
       },
+      "/auth/me": {
+        get: {
+          tags: ["Users"],
+          summary: "Get the signed-in user's own profile",
+          security: bearerSecurity(),
+          responses: {
+            "200": jsonResponse("Own profile.", ref("UserProfile")),
+            "401": jsonResponse("Authentication required.", ref("ErrorResponse")),
+            "404": jsonResponse("User not found.", ref("ErrorResponse")),
+            "500": jsonResponse("Internal server error.", ref("ErrorResponse")),
+          },
+        },
+        patch: {
+          tags: ["Users"],
+          summary: "Update the signed-in user's own name and email",
+          security: bearerSecurity(),
+          requestBody: {
+            required: true,
+            content: jsonContent(ref("UpdateProfileRequest")),
+          },
+          responses: {
+            "200": jsonResponse("Updated profile.", ref("UserProfile")),
+            "400": {
+              description: "Validation error or nothing to update.",
+              content: jsonContent({
+                oneOf: [ref("ErrorResponse"), ref("ValidationError")],
+              }),
+            },
+            "401": jsonResponse("Authentication required.", ref("ErrorResponse")),
+            "404": jsonResponse("User not found.", ref("ErrorResponse")),
+            "409": jsonResponse("Email already taken.", ref("ErrorResponse")),
+            "500": jsonResponse("Internal server error.", ref("ErrorResponse")),
+          },
+        },
+      },
       "/auth/users": {
         get: {
           tags: ["Users"],
@@ -233,6 +268,82 @@ export function createOpenApiDocument(ctx: AppContext) {
               items: ref("User"),
             }),
             "403": jsonResponse("Only admins can access this endpoint.", ref("ErrorResponse")),
+          },
+        },
+        post: {
+          tags: ["Users"],
+          summary: "Create a user as an admin",
+          security: bearerSecurity(),
+          requestBody: {
+            required: true,
+            content: jsonContent(ref("CreateUserRequest")),
+          },
+          responses: {
+            "201": jsonResponse("User created.", ref("User")),
+            "400": {
+              description: "Validation error.",
+              content: jsonContent({
+                oneOf: [ref("ErrorResponse"), ref("ValidationError")],
+              }),
+            },
+            "403": jsonResponse("Only admins can create users.", ref("ErrorResponse")),
+            "409": jsonResponse("Email already taken.", ref("ErrorResponse")),
+            "500": jsonResponse("Internal server error.", ref("ErrorResponse")),
+          },
+        },
+      },
+      "/auth/users/{userId}": {
+        delete: {
+          tags: ["Users"],
+          summary: "Permanently delete a user",
+          security: bearerSecurity(),
+          parameters: [
+            {
+              name: "userId",
+              in: "path",
+              required: true,
+              description: "MongoDB user id.",
+              schema: { type: "string" },
+            },
+          ],
+          responses: {
+            "200": jsonResponse("User deleted.", ref("MessageResponse")),
+            "400": jsonResponse("Invalid user id.", ref("ErrorResponse")),
+            "403": jsonResponse("Only admins can delete users.", ref("ErrorResponse")),
+            "404": jsonResponse("User not found.", ref("ErrorResponse")),
+            "409": jsonResponse(
+              "Own account, last admin, or the user still has open loans or reservations.",
+              ref("ErrorResponse")
+            ),
+            "500": jsonResponse("Internal server error.", ref("ErrorResponse")),
+          },
+        },
+      },
+      "/auth/users/{userId}/status": {
+        patch: {
+          tags: ["Users"],
+          summary: "Disable or re-enable a user account",
+          security: bearerSecurity(),
+          parameters: [
+            {
+              name: "userId",
+              in: "path",
+              required: true,
+              description: "MongoDB user id.",
+              schema: { type: "string" },
+            },
+          ],
+          requestBody: {
+            required: true,
+            content: jsonContent(ref("UpdateUserStatusRequest")),
+          },
+          responses: {
+            "200": jsonResponse("Account status updated or unchanged.", ref("UserStatusResponse")),
+            "400": jsonResponse("Invalid user id or payload.", ref("ErrorResponse")),
+            "403": jsonResponse("Only admins can change account status.", ref("ErrorResponse")),
+            "404": jsonResponse("User not found.", ref("ErrorResponse")),
+            "409": jsonResponse("Own account or the last active admin.", ref("ErrorResponse")),
+            "500": jsonResponse("Internal server error.", ref("ErrorResponse")),
           },
         },
       },
@@ -424,34 +535,6 @@ export function createOpenApiDocument(ctx: AppContext) {
             "403": jsonResponse("Only staff can delete books.", ref("ErrorResponse")),
             "404": jsonResponse("Book not found.", ref("ErrorResponse")),
             "409": jsonResponse("Book has active loans.", ref("ErrorResponse")),
-            "500": jsonResponse("Internal server error.", ref("ErrorResponse")),
-          },
-        },
-      },
-      "/books/{bookId}/change-availability": {
-        put: {
-          tags: ["Books"],
-          summary: "Adjust available copies for a book",
-          security: bearerSecurity(),
-          parameters: [
-            {
-              name: "bookId",
-              in: "path",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          requestBody: {
-            required: true,
-            content: jsonContent(ref("ChangeBookAvailabilityRequest")),
-          },
-          responses: {
-            "200": jsonResponse("Availability updated.", ref("BookAvailabilityResponse")),
-            "400": jsonResponse("Invalid request.", ref("ErrorResponse")),
-            "401": jsonResponse("Authentication required.", ref("ErrorResponse")),
-            "403": jsonResponse("Only staff can change availability.", ref("ErrorResponse")),
-            "404": jsonResponse("Book not found.", ref("ErrorResponse")),
-            "409": jsonResponse("Stock is inconsistent with active loans.", ref("ErrorResponse")),
             "500": jsonResponse("Internal server error.", ref("ErrorResponse")),
           },
         },
@@ -1002,6 +1085,7 @@ export function createOpenApiDocument(ctx: AppContext) {
             lastName: { type: "string" },
             email: { type: "string", format: "email" },
             role: ref("UserRole"),
+            disabled: { type: "boolean" },
           },
         },
         UserProfile: {
@@ -1013,6 +1097,44 @@ export function createOpenApiDocument(ctx: AppContext) {
             lastName: { type: "string" },
             email: { type: "string", format: "email" },
             role: ref("UserRole"),
+            disabled: { type: "boolean" },
+          },
+        },
+        UpdateProfileRequest: {
+          type: "object",
+          properties: {
+            firstName: { type: "string", minLength: 1 },
+            lastName: { type: "string", minLength: 1 },
+            email: { type: "string", format: "email" },
+          },
+          additionalProperties: false,
+        },
+        CreateUserRequest: {
+          type: "object",
+          required: ["firstName", "lastName", "email", "password", "role"],
+          properties: {
+            firstName: { type: "string", minLength: 1 },
+            lastName: { type: "string", minLength: 1 },
+            email: { type: "string", format: "email" },
+            password: { type: "string", minLength: 8 },
+            role: ref("UserRole"),
+          },
+          additionalProperties: false,
+        },
+        UpdateUserStatusRequest: {
+          type: "object",
+          required: ["disabled"],
+          properties: {
+            disabled: { type: "boolean" },
+          },
+          additionalProperties: false,
+        },
+        UserStatusResponse: {
+          type: "object",
+          required: ["message", "disabled"],
+          properties: {
+            message: { type: "string" },
+            disabled: { type: "boolean" },
           },
         },
         UpdateUserRoleRequest: {
@@ -1063,25 +1185,6 @@ export function createOpenApiDocument(ctx: AppContext) {
           properties: {
             message: { type: "string" },
             book: ref("Book"),
-            availabilityAdjusted: { type: "boolean" },
-            maxAvailableCopies: { type: "integer", minimum: 0 },
-            activeLoanCount: { type: "integer", minimum: 0 },
-          },
-        },
-        ChangeBookAvailabilityRequest: {
-          type: "object",
-          properties: {
-            available: { type: "boolean" },
-            availableCopies: { type: "integer", minimum: 0 },
-          },
-          additionalProperties: false,
-        },
-        BookAvailabilityResponse: {
-          type: "object",
-          required: ["message", "fulfilledReservations", "availabilityAdjusted", "maxAvailableCopies", "activeLoanCount"],
-          properties: {
-            message: { type: "string" },
-            fulfilledReservations: { type: "integer", minimum: 0 },
             availabilityAdjusted: { type: "boolean" },
             maxAvailableCopies: { type: "integer", minimum: 0 },
             activeLoanCount: { type: "integer", minimum: 0 },
