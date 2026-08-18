@@ -7,6 +7,7 @@ import type { Request, Response } from "express"
 
 import { apiRoutes } from "../api/api-routes"
 import helmet from "helmet";
+import { registerOpenApiRoutes } from "../openapi/openapi-routes";
 
 
 export function initExpress(app: express.Application, ctx: AppContext) {
@@ -22,6 +23,7 @@ export function initExpress(app: express.Application, ctx: AppContext) {
   app.get(`${ctx.config.api.prefix}/health`, (_req: Request, res: Response) => {
     res.status(200).json({ status: "ok" })
   })
+  registerOpenApiRoutes(app, ctx)
   app.use(ctx.config.api.prefix, apiRoutes(ctx))
   app.use((_req: Request, res: Response) => {
     res.status(404).json({ error: "Not Found" })
