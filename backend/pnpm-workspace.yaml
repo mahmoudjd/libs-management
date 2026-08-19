@@ -2,3 +2,8 @@ allowBuilds:
   esbuild: false
 ignoredBuiltDependencies:
   - esbuild
+overrides:
+  # tsup pins esbuild ^0.27.0, which cannot reach the 0.28.1 that fixes
+  # GHSA dev-server arbitrary file read on Windows. tsx already runs 0.28.x
+  # in this same tree, so both bundlers share one patched version.
+  esbuild: ">=0.28.1"
