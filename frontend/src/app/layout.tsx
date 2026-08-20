@@ -8,7 +8,11 @@ import { ContentContainer } from "@/components/layout/content-container";
 import { THEME_STORAGE_KEY } from "@/components/theme-toggle";
 
 export const metadata: Metadata = {
-    title: "Library Management System",
+    // Per-route layouts supply the page name; this frames it consistently.
+    title: {
+        default: "MyLibrary",
+        template: "%s · MyLibrary",
+    },
     description: "A modern system for managing a library",
 };
 

@@ -2,7 +2,6 @@ import {Router} from "express";
 
 import {loginUser} from "./login-user";
 import {signupUser} from "./signup-user";
-import {getUser} from "./get-user";
 
 import {authentication} from "../middlewares/authentication";
 
@@ -31,8 +30,6 @@ export function authRoutes(appCtx: AppContext, appRouter: Router) {
     authRouter.route("/users")
         .get(toRequestHandler(authentication(appCtx)), toRequestHandler(getUsers(appCtx)))
         .post(toRequestHandler(authentication(appCtx)), toRequestHandler(createUserHandler(appCtx)))
-    authRouter.route("/get-user/:userId")
-        .get(toRequestHandler(authentication(appCtx)), toRequestHandler(getUser(appCtx)))
     authRouter.route("/users/:userId")
         .delete(toRequestHandler(authentication(appCtx)), toRequestHandler(deleteUserHandler(appCtx)))
     authRouter.route("/users/:userId/role")

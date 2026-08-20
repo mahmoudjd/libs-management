@@ -28,7 +28,7 @@ export default function SignupPage() {
     setLoading(true)
 
     if (!email || !password || !firstName || !lastName) {
-      setError("Bitte füllen Sie alle Felder aus.")
+      setError("Please fill in every field.")
       setLoading(false)
       return
     }
@@ -37,7 +37,7 @@ export default function SignupPage() {
       const response = await signupUser({ email, password, firstName, lastName })
 
       if (!response) {
-        setError("Fehler bei der Registrierung.")
+        setError("Could not create the account.")
       } else {
         const loginResponse = await signIn("credentials", {
           email,
@@ -47,7 +47,7 @@ export default function SignupPage() {
 
         if (loginResponse?.error) {
           setError(
-            "Registrierung erfolgreich, aber automatische Anmeldung fehlgeschlagen. Bitte melden Sie sich an."
+            "Account created, but signing you in automatically failed. Please sign in."
           )
           router.push("/login")
         } else {
@@ -55,20 +55,19 @@ export default function SignupPage() {
         }
       }
     } catch {
-      setError("Fehler bei der Registrierung.")
+      setError("Could not create the account.")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="flex min-h-[80vh] items-center justify-center py-10">
-      <Card className="w-full max-w-md">
-        <CardContent className="space-y-5">
+    <Card className="w-full max-w-md">
+      <CardContent className="space-y-5">
           <div className="text-center">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Konto erstellen</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Create your account</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              In wenigen Sekunden Zugang zum gesamten Bestand.
+              Get access to the whole catalogue in seconds.
             </p>
           </div>
 
@@ -76,7 +75,7 @@ export default function SignupPage() {
 
           <form onSubmit={handleSignup} className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Vorname" htmlFor="signup-first-name">
+              <Field label="First name" htmlFor="signup-first-name">
                 <Input
                   id="signup-first-name"
                   type="text"
@@ -86,7 +85,7 @@ export default function SignupPage() {
                   required
                 />
               </Field>
-              <Field label="Nachname" htmlFor="signup-last-name">
+              <Field label="Last name" htmlFor="signup-last-name">
                 <Input
                   id="signup-last-name"
                   type="text"
@@ -98,7 +97,7 @@ export default function SignupPage() {
               </Field>
             </div>
 
-            <Field label="E-Mail" htmlFor="signup-email">
+            <Field label="Email" htmlFor="signup-email">
               <Input
                 id="signup-email"
                 type="email"
@@ -110,7 +109,7 @@ export default function SignupPage() {
               />
             </Field>
 
-            <Field label="Passwort" htmlFor="signup-password" hint="Mindestens 8 Zeichen.">
+            <Field label="Password" htmlFor="signup-password" hint="At least 8 characters.">
               <PasswordInput
                 id="signup-password"
                 autoComplete="new-password"
@@ -126,13 +125,13 @@ export default function SignupPage() {
                 aria-hidden="true"
                 className={loading ? "h-5 w-5 animate-spin" : "h-5 w-5"}
               />
-              {loading ? "Registrieren..." : "Registrieren"}
+              {loading ? "Creating account..." : "Create account"}
             </Button>
           </form>
 
           <div className="flex items-center gap-3">
             <span className="h-px flex-1 bg-border" />
-            <span className="text-xs text-muted-foreground">Oder mit</span>
+            <span className="text-xs text-muted-foreground">or continue with</span>
             <span className="h-px flex-1 bg-border" />
           </div>
 
@@ -143,17 +142,16 @@ export default function SignupPage() {
             disabled={loading}
             onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
           >
-            Google Registrierung
+            Google
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
-            Bereits ein Konto?{" "}
+            Already have an account?{" "}
             <Link href="/login" className="font-semibold text-primary hover:underline">
-              Anmelden
+              Sign in
             </Link>
           </p>
         </CardContent>
-      </Card>
-    </div>
+    </Card>
   )
 }
