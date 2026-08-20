@@ -12,7 +12,7 @@ import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getApiErrorMessage } from "@/lib/api-error"
-import { useLoans } from "@/lib/hooks/useLoans"
+import { useLoanCounts } from "@/lib/hooks/useLoans"
 import { useProfile } from "@/lib/hooks/useProfile"
 import { useReservations } from "@/lib/hooks/useReservations"
 
@@ -28,7 +28,7 @@ function SummaryTile({ label, value }: { label: string; value: number }) {
 export default function ProfilePage() {
   const { data: session, status } = useSession()
   const { profile, isLoading, error, updateProfile, isUpdatingProfile } = useProfile()
-  const { userLoans } = useLoans([])
+  const loanCounts = useLoanCounts()
   const { myReservations } = useReservations()
 
   const [firstName, setFirstName] = useState("")
@@ -71,9 +71,6 @@ export default function ProfilePage() {
     }
   }
 
-  const activeLoans = userLoans.filter((loan) => loan.status === "active").length
-  const overdueLoans = userLoans.filter((loan) => loan.status === "overdue").length
-  const returnedLoans = userLoans.filter((loan) => loan.status === "returned").length
   const pendingReservations = myReservations.filter(
     (reservation) => reservation.status === "pending"
   ).length
@@ -181,9 +178,9 @@ export default function ProfilePage() {
             <CardContent>
               <h2 className="mb-4 text-lg font-semibold text-foreground">My activity</h2>
               <div className="grid grid-cols-2 gap-3">
-                <SummaryTile label="Active loans" value={activeLoans} />
-                <SummaryTile label="Overdue" value={overdueLoans} />
-                <SummaryTile label="Returned" value={returnedLoans} />
+                <SummaryTile label="Active loans" value={loanCounts.active} />
+                <SummaryTile label="Overdue" value={loanCounts.overdue} />
+                <SummaryTile label="Returned" value={loanCounts.returned} />
                 <SummaryTile label="Reservations" value={pendingReservations} />
               </div>
               <p className="mt-4 text-xs text-muted-foreground">

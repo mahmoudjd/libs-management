@@ -14,6 +14,7 @@ import {
 } from "@heroicons/react/24/outline"
 
 import { LoanTrendsChart } from "@/components/dashboard/loan-trends-chart"
+import { RecentActivity } from "@/components/dashboard/recent-activity"
 import { PageLayout } from "@/components/page-layout"
 import { Alert } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -254,6 +255,9 @@ export default function Dashboard() {
           hasError={Boolean(loanTrendsError)}
           trends={loanTrends}
         />
+
+        {/* Audit logs are admin-only, so librarians do not get this card. */}
+        {isAdmin && <RecentActivity enabled={isAdmin} />}
       </PageLayout>
     )
   }
