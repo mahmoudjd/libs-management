@@ -11,6 +11,7 @@ export type ValidationError = Schemas["ValidationError"]
 export type Book = Schemas["Book"]
 export type BookFormData = paths["/books"]["post"]["requestBody"]["content"]["application/json"]
 export type PaginatedBooksResponse = Schemas["PaginatedBooks"]
+export type GenreCount = Schemas["GenreCount"]
 export type BookUpdateResponse = Schemas["BookUpdateResponse"]
 
 export type AuthUser = Schemas["AuthenticatedUser"]

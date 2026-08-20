@@ -347,29 +347,6 @@ export function createOpenApiDocument(ctx: AppContext) {
           },
         },
       },
-      "/auth/get-user/{userId}": {
-        get: {
-          tags: ["Users"],
-          summary: "Get one user",
-          security: bearerSecurity(),
-          parameters: [
-            {
-              name: "userId",
-              in: "path",
-              required: true,
-              description: "MongoDB user id.",
-              schema: { type: "string" },
-            },
-          ],
-          responses: {
-            "200": jsonResponse("User profile.", ref("UserProfile")),
-            "400": jsonResponse("Invalid user id.", ref("ErrorResponse")),
-            "401": jsonResponse("Authentication required.", ref("ErrorResponse")),
-            "403": jsonResponse("Forbidden.", ref("ErrorResponse")),
-            "404": jsonResponse("User not found.", ref("ErrorResponse")),
-          },
-        },
-      },
       "/auth/users/{userId}/role": {
         patch: {
           tags: ["Users"],
@@ -481,6 +458,19 @@ export function createOpenApiDocument(ctx: AppContext) {
             },
             "401": jsonResponse("Authentication required.", ref("ErrorResponse")),
             "403": jsonResponse("Only staff can add books.", ref("ErrorResponse")),
+            "500": jsonResponse("Internal server error.", ref("ErrorResponse")),
+          },
+        },
+      },
+      "/books/genres": {
+        get: {
+          tags: ["Books"],
+          summary: "List distinct genres with book counts",
+          responses: {
+            "200": jsonResponse("Genres in the catalogue.", {
+              type: "array",
+              items: ref("GenreCount"),
+            }),
             "500": jsonResponse("Internal server error.", ref("ErrorResponse")),
           },
         },
@@ -1024,6 +1014,14 @@ export function createOpenApiDocument(ctx: AppContext) {
             },
           },
           additionalProperties: true,
+        },
+        GenreCount: {
+          type: "object",
+          required: ["genre", "count"],
+          properties: {
+            genre: { type: "string" },
+            count: { type: "integer", minimum: 0 },
+          },
         },
         UserRole: {
           type: "string",

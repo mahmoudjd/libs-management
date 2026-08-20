@@ -2,7 +2,7 @@
 
 import React, { useDeferredValue, useEffect, useMemo, useState } from "react"
 import { useSession } from "next-auth/react"
-import { MagnifyingGlassIcon, PlusIcon } from "@heroicons/react/24/outline"
+import { ArrowsUpDownIcon, MagnifyingGlassIcon, PlusIcon } from "@heroicons/react/24/outline"
 
 import AddBookForm from "@/components/AddBookForm"
 import BookList from "@/components/BookList"
@@ -20,11 +20,21 @@ import { Select } from "@/components/ui/select"
 import { SkeletonCards } from "@/components/ui/skeleton"
 import { getApiErrorMessage } from "@/lib/api-error"
 import { useBooks } from "@/lib/hooks/useBooks"
+import { useGenres } from "@/lib/hooks/useGenres"
 import { useLoans } from "@/lib/hooks/useLoans"
 import { useReservations } from "@/lib/hooks/useReservations"
 import type { Book } from "@/lib/types"
 
 type BookSortBy = "createdAt" | "title" | "author" | "genre" | "availableCopies"
+
+// Newest-first reads right for dates; A-Z for everything else. The toggle still wins.
+const DEFAULT_SORT_ORDER: Record<BookSortBy, "asc" | "desc"> = {
+  createdAt: "desc",
+  title: "asc",
+  author: "asc",
+  genre: "asc",
+  availableCopies: "desc",
+}
 
 const PAGE_SIZE = 12
 
@@ -37,6 +47,7 @@ export default function BooksPage() {
   const [genreFilter, setGenreFilter] = useState("")
   const [availableOnly, setAvailableOnly] = useState(false)
   const [sortBy, setSortBy] = useState<BookSortBy>("createdAt")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [page, setPage] = useState(1)
   const deferredSearchQuery = useDeferredValue(searchQuery)
   const deferredGenreFilter = useDeferredValue(genreFilter)
@@ -61,10 +72,11 @@ export default function BooksPage() {
     page,
     pageSize: PAGE_SIZE,
     sortBy,
-    order: sortBy === "createdAt" ? "desc" : "asc",
+    order: sortOrder,
   })
 
   const { borrowBook, isBorrowingBook, borrowingBookId } = useLoans(books)
+  const { genres } = useGenres()
 
   const {
     myReservations,
@@ -87,16 +99,17 @@ export default function BooksPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [deferredSearchQuery, deferredGenreFilter, availableOnly, sortBy])
+  }, [deferredSearchQuery, deferredGenreFilter, availableOnly, sortBy, sortOrder])
 
   const hasActiveFilters =
-    searchQuery !== "" || genreFilter !== "" || availableOnly || sortBy !== "createdAt"
+    searchQuery !== "" || genreFilter !== "" || availableOnly || sortBy !== "createdAt" || sortOrder !== DEFAULT_SORT_ORDER[sortBy]
 
   const clearFilters = () => {
     setSearchQuery("")
     setGenreFilter("")
     setAvailableOnly(false)
     setSortBy("createdAt")
+    setSortOrder("desc")
   }
 
   const pendingReservations = useMemo(
@@ -208,30 +221,52 @@ export default function BooksPage() {
               <label htmlFor="book-genre" className="mb-1.5 block text-xs font-medium text-muted-foreground">
                 Genre
               </label>
-              <Input
+              <Select
                 id="book-genre"
-                type="text"
-                placeholder="e.g. Fantasy"
                 value={genreFilter}
                 onChange={(e) => setGenreFilter(e.target.value)}
-              />
+              >
+                <option value="">All genres</option>
+                {genres.map((entry) => (
+                  <option key={entry.genre} value={entry.genre}>
+                    {entry.genre} ({entry.count})
+                  </option>
+                ))}
+              </Select>
             </div>
 
             <div>
               <label htmlFor="book-sort" className="mb-1.5 block text-xs font-medium text-muted-foreground">
                 Sort by
               </label>
-              <Select
-                id="book-sort"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as BookSortBy)}
-              >
-                <option value="createdAt">Newest</option>
-                <option value="title">Title</option>
-                <option value="author">Author</option>
-                <option value="genre">Genre</option>
-                <option value="availableCopies">Available copies</option>
-              </Select>
+              <div className="flex gap-2">
+                <Select
+                  id="book-sort"
+                  className="flex-1"
+                  value={sortBy}
+                  onChange={(e) => {
+                    const nextSortBy = e.target.value as BookSortBy
+                    setSortBy(nextSortBy)
+                    setSortOrder(DEFAULT_SORT_ORDER[nextSortBy])
+                  }}
+                >
+                  <option value="createdAt">Date added</option>
+                  <option value="title">Title</option>
+                  <option value="author">Author</option>
+                  <option value="genre">Genre</option>
+                  <option value="availableCopies">Available copies</option>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0"
+                  aria-label={sortOrder === "asc" ? "Sort descending" : "Sort ascending"}
+                  title={sortOrder === "asc" ? "Ascending" : "Descending"}
+                  onClick={() => setSortOrder((current) => (current === "asc" ? "desc" : "asc"))}
+                >
+                  <ArrowsUpDownIcon aria-hidden="true" className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             <div className="flex items-end">

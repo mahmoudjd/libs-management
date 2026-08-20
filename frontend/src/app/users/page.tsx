@@ -1,8 +1,7 @@
 "use client"
 
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useMemo, useState } from "react"
 import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
 import { ArrowDownTrayIcon, MagnifyingGlassIcon, UserPlusIcon } from "@heroicons/react/24/outline"
 
 import CreateUserDialog from "@/components/users/create-user-dialog"
@@ -32,7 +31,6 @@ const roleFilterOptions: Array<{ value: RoleFilter; label: string }> = [
 
 export default function UsersPage() {
     const { data: session, status } = useSession()
-    const router = useRouter()
     const isAdmin = session?.user?.salesRole === "admin"
 
     const { users, isLoading, error, updateRole, updatingUserId, createUser, isCreatingUser } =
@@ -44,15 +42,6 @@ export default function UsersPage() {
     const [actionError, setActionError] = useState<string | null>(null)
     const [createDialogOpen, setCreateDialogOpen] = useState(false)
     const [createError, setCreateError] = useState<string | null>(null)
-
-    useEffect(() => {
-        if (status === "loading") {
-            return
-        }
-        if (!session || session.user.salesRole !== "admin") {
-            router.push("/")
-        }
-    }, [session, status, router])
 
     const statusFilterOptions: Array<{ value: StatusFilter; label: string; count: number }> = useMemo(() => {
         const disabledCount = users.filter((user) => user.disabled).length
@@ -92,10 +81,6 @@ export default function UsersPage() {
         } catch (updateError) {
             setActionError(getApiErrorMessage(updateError, "Failed to update user role"))
         }
-    }
-
-    if (!isAdmin) {
-        return null
     }
 
     return (
@@ -164,7 +149,7 @@ export default function UsersPage() {
                 </Alert>
             )}
 
-            {isLoading ? (
+            {isLoading || status === "loading" ? (
                 <GridList>
                     {Array.from({ length: 6 }, (_, index) => (
                         <Skeleton key={index} className="h-52 w-full rounded-2xl" />

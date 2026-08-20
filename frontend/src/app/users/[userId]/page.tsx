@@ -61,15 +61,6 @@ export default function UserDetailPage() {
     }
   }, [user])
 
-  useEffect(() => {
-    if (status === "loading") {
-      return
-    }
-    if (!session || session.user.salesRole !== "admin") {
-      router.push("/")
-    }
-  }, [session, status, router])
-
   const counts = useMemo(() => {
     return {
       active: loans.filter((loan) => loan.status === "active").length,
@@ -77,10 +68,6 @@ export default function UserDetailPage() {
       returned: loans.filter((loan) => loan.status === "returned").length,
     }
   }, [loans])
-
-  if (!isAdmin) {
-    return null
-  }
 
   const handleRoleSave = async () => {
     if (!user) return
@@ -113,7 +100,7 @@ export default function UserDetailPage() {
     }
   }
 
-  if (isLoading) {
+  if (isLoading || status === "loading") {
     return (
       <PageLayout title="User">
         <Skeleton className="h-64 w-full rounded-2xl" />

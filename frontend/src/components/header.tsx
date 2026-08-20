@@ -16,6 +16,8 @@ import {
 } from "@/components/navigation/navigation-items";
 import { cn } from "@/lib/utils";
 
+const AUTH_ROUTES = new Set(["/login", "/signup"]);
+
 export default function Header() {
     const { data: session, status } = useSession();
     const pathname = usePathname() ?? "";
@@ -31,6 +33,11 @@ export default function Header() {
         isAdmin,
         isStaff,
     });
+
+    // Auth pages are self-contained; app chrome (and a Login button) is noise there.
+    if (AUTH_ROUTES.has(pathname)) {
+        return null;
+    }
 
     return (
         <header className="sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur">

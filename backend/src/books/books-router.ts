@@ -3,6 +3,7 @@ import { Router } from 'express';
 import type { AppContext } from '../context/app-ctx';
 
 import { getBooksHandler } from './get-books';
+import { getGenresHandler } from './get-genres';
 import { createBookHandler } from './create-book';
 import { deleteBookHandler } from './delete-book';
 import { authentication } from '../middlewares/authentication';
@@ -19,6 +20,10 @@ export function booksRoutes(appCtx: AppContext, appRouter: Router) {
   booksRouter.route('/')
     .get(toRequestHandler(getBooksHandler(appCtx)))
     .post(toRequestHandler(authentication(appCtx)), toRequestHandler(createBookHandler(appCtx)))
+
+  // Registered before /:bookId so "genres" is not read as a book id.
+  booksRouter.route('/genres')
+    .get(toRequestHandler(getGenresHandler(appCtx)))
 
   booksRouter.route('/:bookId')
     .delete(toRequestHandler(authentication(appCtx)), toRequestHandler(deleteBookHandler(appCtx)))

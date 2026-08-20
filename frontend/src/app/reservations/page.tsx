@@ -1,8 +1,7 @@
 "use client"
 
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useMemo, useState } from "react"
 import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
 
 import { PageLayout } from "@/components/page-layout"
 import { Alert } from "@/components/ui/alert"
@@ -26,7 +25,6 @@ const statusVariant: Record<Reservation["status"], "warning" | "success" | "seco
 
 export default function ReservationsPage() {
   const { data: session, status } = useSession()
-  const router = useRouter()
   const role = session?.user?.salesRole
   const isStaff = role === "admin" || role === "librarian"
 
@@ -40,15 +38,6 @@ export default function ReservationsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("pending")
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (status === "loading") {
-      return
-    }
-    if (!session || !isStaff) {
-      router.push("/")
-    }
-  }, [session, status, isStaff, router])
 
   const counts = useMemo(() => {
     return {
@@ -78,10 +67,6 @@ export default function ReservationsPage() {
     }
   }
 
-  if (!isStaff) {
-    return null
-  }
-
   const filterOptions: Array<{ value: StatusFilter; label: string; count: number }> = [
     { value: "pending", label: "Pending", count: counts.pending },
     { value: "fulfilled", label: "Fulfilled", count: counts.fulfilled },
@@ -109,7 +94,7 @@ export default function ReservationsPage() {
         </Alert>
       )}
 
-      {isLoadingAllReservations ? (
+      {isLoadingAllReservations || status === "loading" ? (
         <div className="space-y-3">
           {Array.from({ length: 4 }, (_, index) => (
             <Skeleton key={index} className="h-24 w-full rounded-2xl" />

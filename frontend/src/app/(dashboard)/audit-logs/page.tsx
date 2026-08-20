@@ -2,7 +2,6 @@
 
 import React, { useDeferredValue, useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
 
 import { PageLayout } from "@/components/page-layout"
 import { Alert } from "@/components/ui/alert"
@@ -18,7 +17,6 @@ const PAGE_SIZE = 25
 
 export default function AuditLogsPage() {
   const { data: session, status } = useSession()
-  const router = useRouter()
   const isAdmin = session?.user?.salesRole === "admin"
 
   const [actionFilter, setActionFilter] = useState("")
@@ -42,19 +40,6 @@ export default function AuditLogsPage() {
   useEffect(() => {
     setPage(1)
   }, [deferredActionFilter, deferredEntityTypeFilter])
-
-  useEffect(() => {
-    if (status === "loading") {
-      return
-    }
-    if (!session || session.user.salesRole !== "admin") {
-      router.push("/")
-    }
-  }, [session, status, router])
-
-  if (!isAdmin) {
-    return null
-  }
 
   return (
     <PageLayout
@@ -94,7 +79,7 @@ export default function AuditLogsPage() {
         </Alert>
       )}
 
-      {isLoading ? (
+      {isLoading || status === "loading" ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }, (_, index) => (
             <Skeleton key={index} className="h-28 w-full rounded-xl" />

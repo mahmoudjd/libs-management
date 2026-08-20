@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
 
 import { PageLayout } from "@/components/page-layout"
 import { Alert } from "@/components/ui/alert"
@@ -28,7 +27,6 @@ function SummaryTile({ label, value }: { label: string; value: number }) {
 
 export default function ProfilePage() {
   const { data: session, status } = useSession()
-  const router = useRouter()
   const { profile, isLoading, error, updateProfile, isUpdatingProfile } = useProfile()
   const { userLoans } = useLoans([])
   const { myReservations } = useReservations()
@@ -46,12 +44,6 @@ export default function ProfilePage() {
       setEmail(profile.email)
     }
   }, [profile])
-
-  useEffect(() => {
-    if (status !== "loading" && !session) {
-      router.push("/login")
-    }
-  }, [session, status, router])
 
   const isDirty =
     Boolean(profile) &&
@@ -79,10 +71,6 @@ export default function ProfilePage() {
     }
   }
 
-  if (!session) {
-    return null
-  }
-
   const activeLoans = userLoans.filter((loan) => loan.status === "active").length
   const overdueLoans = userLoans.filter((loan) => loan.status === "overdue").length
   const returnedLoans = userLoans.filter((loan) => loan.status === "returned").length
@@ -94,7 +82,7 @@ export default function ProfilePage() {
 
   return (
     <PageLayout title="My Profile" description="Your account details and library activity.">
-      {isLoading ? (
+      {isLoading || status === "loading" ? (
         <div className="space-y-4">
           <Skeleton className="h-32 w-full rounded-2xl" />
           <Skeleton className="h-80 w-full rounded-2xl" />
