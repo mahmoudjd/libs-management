@@ -75,7 +75,8 @@ export default function BooksPage() {
     order: sortOrder,
   })
 
-  const { borrowBook, isBorrowingBook, borrowingBookId } = useLoans(books)
+  // Only the borrow mutation is needed here, so the loan list stays unfetched.
+  const { borrowBook, isBorrowingBook, borrowingBookId } = useLoans({ enabled: false })
   const { genres } = useGenres()
 
   const {
