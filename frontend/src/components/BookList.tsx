@@ -3,6 +3,8 @@ import React from "react"
 import BookCard from "./BookCard"
 import type { Book, Reservation } from "@/lib/types"
 import { GridList } from "@/components/ui/grid-list"
+import { BookOpenIcon } from "@heroicons/react/24/outline"
+
 import { EmptyState } from "@/components/ui/empty-state"
 
 type BookListProps = {
@@ -37,6 +39,7 @@ export const BookList: React.FC<BookListProps> = ({
   if (books.length === 0) {
     return (
       <EmptyState
+        Icon={BookOpenIcon}
         title="No books found"
         description="Try adjusting your search or filters."
       />
