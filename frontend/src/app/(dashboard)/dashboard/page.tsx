@@ -57,7 +57,7 @@ function StatCard({
         <Icon aria-hidden="true" className="h-5 w-5" />
       </span>
       <span className="mt-4 block text-sm font-medium text-muted-foreground">{title}</span>
-      <span className="mt-1 block text-3xl font-semibold tracking-tight text-foreground">{value}</span>
+      <span className="mt-1 block text-3xl font-semibold tracking-tight text-foreground tabular-nums">{value}</span>
     </>
   )
 

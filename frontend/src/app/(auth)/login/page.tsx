@@ -10,6 +10,7 @@ import { Alert } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Field } from "@/components/ui/field"
+import { HandwritingSvg } from "@/components/ui/handwriting-svg"
 import { Input } from "@/components/ui/input"
 import { PasswordInput } from "@/components/ui/password-input"
 
@@ -51,7 +52,20 @@ function LoginForm() {
     <Card className="w-full max-w-md">
       <CardContent className="space-y-5">
         <div className="text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Welcome back</h1>
+          {/* The heading keeps its semantics; HandwritingSvg supplies the accessible
+              name and falls back to plain text if the font cannot be fetched. */}
+          <h1 className="flex justify-center text-2xl font-bold tracking-tight text-foreground">
+            <HandwritingSvg
+              text="Welcome back"
+              width={260}
+              height={56}
+              fontSize={40}
+              strokeWidth={1.2}
+              duration={1.8}
+              delay={0.2}
+              className="text-foreground"
+            />
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Sign in to borrow books and manage your loans.
           </p>

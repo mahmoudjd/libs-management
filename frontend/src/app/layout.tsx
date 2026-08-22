@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Fira_Code, Fira_Sans } from "next/font/google";
 import "./globals.css";
 import { authOptions } from "@/auth";
 import { getServerSession } from "next-auth";
@@ -6,6 +7,20 @@ import Providers from "@/components/Providers";
 import Header from "@/components/header";
 import { ContentContainer } from "@/components/layout/content-container";
 import { THEME_STORAGE_KEY } from "@/components/theme-toggle";
+
+const firaSans = Fira_Sans({
+    subsets: ["latin"],
+    weight: ["300", "400", "500", "600", "700"],
+    variable: "--font-fira-sans",
+    display: "swap",
+});
+
+// Mono carries the numbers in KPIs and tables, so it needs tabular figures.
+const firaCode = Fira_Code({
+    subsets: ["latin"],
+    variable: "--font-fira-code",
+    display: "swap",
+});
 
 export const metadata: Metadata = {
     // Per-route layouts supply the page name; this frames it consistently.
@@ -27,7 +42,7 @@ export default async function RootLayout({children}: Readonly<{
     const session = await getServerSession(authOptions)
 
     return (
-        <html lang="en" suppressHydrationWarning>
+        <html lang="en" className={`${firaSans.variable} ${firaCode.variable}`} suppressHydrationWarning>
         <head>
             <script dangerouslySetInnerHTML={{__html: themeBootScript}}/>
         </head>
