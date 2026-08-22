@@ -56,6 +56,7 @@ export default function BooksPage() {
     books,
     pagination,
     isLoading,
+    error: booksError,
     addBook,
     deleteBook,
     editBook,
@@ -320,6 +321,12 @@ export default function BooksPage() {
 
       {isLoading ? (
         <SkeletonCards count={6} />
+      ) : booksError ? (
+        // Without this branch an unreachable API renders as "No books found",
+        // which sends people off adjusting filters against a dead server.
+        <Alert variant="error">
+          {getApiErrorMessage(booksError, "Could not load the catalogue. Please try again.")}
+        </Alert>
       ) : (
         <>
           <BookList

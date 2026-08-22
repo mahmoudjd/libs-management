@@ -33,6 +33,7 @@ export default function LoansPage() {
         pagination,
         isLoading,
         isFetching,
+        error: loansError,
         returnBook,
         extendLoan,
         prepareOverdueReminders,
@@ -131,6 +132,11 @@ export default function LoansPage() {
 
             {showSkeleton ? (
                 <SkeletonCards count={3} />
+            ) : loansError ? (
+                // An unreachable API must not masquerade as "no loans match this filter".
+                <Alert variant="error">
+                    {getApiErrorMessage(loansError, "Could not load loans. Please try again.")}
+                </Alert>
             ) : (
                 <>
                     <div className={isFetching ? "opacity-60 transition-opacity" : undefined}>

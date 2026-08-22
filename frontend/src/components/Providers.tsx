@@ -18,6 +18,11 @@ export default function Providers({
                 gcTime: 5 * 60_000,
                 retry: 1,
                 refetchOnWindowFocus: false,
+                // The API is a first-party service, not an offline-capable one.
+                // Under the default "online" mode an unreachable backend parks
+                // the query in fetchStatus "paused" and never sets an error, so
+                // every list silently renders its empty state instead.
+                networkMode: "always",
             },
         },
     }));

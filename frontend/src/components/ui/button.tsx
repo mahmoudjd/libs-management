@@ -18,7 +18,9 @@ const buttonVariants = cva(
                 default: "h-10 px-4 py-2",
                 sm: "h-8 px-3 text-xs",
                 lg: "h-12 px-6",
-                icon: "h-9 w-9 p-0",
+                // Stays 36px visually; the pseudo-element pushes the tap area to 44px
+                // so thumbs get a comfortable target without shifting any layout.
+                icon: "relative h-9 w-9 p-0 after:absolute after:left-1/2 after:top-1/2 after:h-11 after:w-11 after:-translate-x-1/2 after:-translate-y-1/2 after:content-['']",
             },
         },
         defaultVariants: {

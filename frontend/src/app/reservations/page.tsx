@@ -31,6 +31,7 @@ export default function ReservationsPage() {
   const {
     allReservations,
     isLoadingAllReservations,
+    allReservationsError,
     cancelReservation,
     isCancellingReservation,
   } = useReservations()
@@ -100,6 +101,11 @@ export default function ReservationsPage() {
             <Skeleton key={index} className="h-24 w-full rounded-2xl" />
           ))}
         </div>
+      ) : allReservationsError ? (
+        // A failed request must not be shown as "No reservations".
+        <Alert variant="error">
+          {getApiErrorMessage(allReservationsError, "Could not load reservations. Please try again.")}
+        </Alert>
       ) : visibleReservations.length === 0 ? (
         <EmptyState
           title="No reservations"
